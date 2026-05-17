@@ -1,0 +1,21 @@
+{
+  "vi_female_google": {
+    "engine": "google",
+    "language_code": "vi-VN",
+    "name": "vi-VN-Wavenet-A",
+    "gender": "FEMALE",
+    "speaking_rate": 1.0
+  },
+  "vi_male_google": {
+    "engine": "google",
+    "language_code": "vi-VN",
+    "name": "vi-VN-Wavenet-B",
+    "gender": "MALE",
+    "speaking_rate": 1.0
+  },
+  "local_placeholder": {
+    "engine": "local_command",
+    "command": "python local_tts.py --text {text_file} --out {output_file}",
+    "speaking_rate": 1.0
+  }
+}

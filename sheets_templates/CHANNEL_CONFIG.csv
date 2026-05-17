@@ -1,0 +1,3 @@
+channel_id,enabled,input_folder,output_folder,voice_id,music_pack_id,overlay_pack_id,render_preset_id,subtitle_style_id,use_nvenc,background_blur,blur_strength,speed,logo_path,logo_opacity,logo_x,logo_y,music_path,music_volume
+kenh_1,TRUE,G:/My Drive/Video Doujin/VIDEO IN PUT GIAKHANH CHANEL/DA_XU_LY,G:/My Drive/Video Doujin/GIA KHHANH CHANEL,voice_female_1,music_chill,overlay_logo_1,shorts_blur,sub_yellow,TRUE,TRUE,28,1.00,,,,,
+kenh_2,FALSE,G:/My Drive/Video Doujin/VIDEO IN PUT GIAKHANH CHANEL/DA_XU_LY,G:/My Drive/Video Doujin/OUTPUT_KENH_2,voice_male_1,music_dark,overlay_logo_2,shorts_blur,sub_white,TRUE,TRUE,32,1.01,,,,,

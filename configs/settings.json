@@ -1,0 +1,15 @@
+{
+  "mode": "google_sheet",
+  "spreadsheet_id": "PASTE_GOOGLE_SHEET_ID_HERE",
+  "service_account_json": "E:/REMOVE SUB/google-service-account.json",
+  "google_key_dir": "E:/REMOVE SUB",
+  "batch_size": 10,
+  "video_exts": [".mp4", ".mkv", ".avi", ".mov"],
+  "text_exts_priority": ["_vi.srt", ".vi.srt", ".srt", ".txt"],
+  "temp_dir": "runtime/temp",
+  "process_queue_only": false,
+  "queue_status_new": "NEW",
+  "queue_status_processing": "PROCESSING",
+  "queue_status_done": "READY_UPLOAD",
+  "queue_status_error": "ERROR"
+}

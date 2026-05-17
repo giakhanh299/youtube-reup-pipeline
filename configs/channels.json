@@ -1,0 +1,34 @@
+{
+  "kenh_giakhang_1": {
+    "enabled": true,
+    "input_folder": "G:/My Drive/Video Doujin/VIDEO IN PUT GIAKHANH CHANEL/DA_XU_LY",
+    "output_folder": "G:/My Drive/Video Doujin/GIA KHHANH CHANEL",
+    "voice_id": "vi_female_google",
+    "logo_path": "assets/logo/logo_kenh_1.png",
+    "logo_opacity": 0.16,
+    "logo_x": 30,
+    "logo_y": 40,
+    "music_path": "assets/music/bg_1.mp3",
+    "music_volume": 0.07,
+    "background_blur": true,
+    "blur_strength": 28,
+    "speed": 1.0,
+    "use_nvenc": true
+  },
+  "kenh_giakhang_2": {
+    "enabled": false,
+    "input_folder": "G:/My Drive/Video Doujin/VIDEO IN PUT GIAKHANH CHANEL/DA_XU_LY",
+    "output_folder": "G:/My Drive/Video Doujin/OUTPUT_KENH_2",
+    "voice_id": "vi_male_google",
+    "logo_path": "assets/logo/logo_kenh_2.png",
+    "logo_opacity": 0.12,
+    "logo_x": "W-w-30",
+    "logo_y": 40,
+    "music_path": "assets/music/bg_2.mp3",
+    "music_volume": 0.05,
+    "background_blur": true,
+    "blur_strength": 32,
+    "speed": 1.01,
+    "use_nvenc": true
+  }
+}

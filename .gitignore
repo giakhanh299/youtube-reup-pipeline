@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+.env
+
+# Secrets
+*.json.key
+service_account*.json
+credentials*.json
+client_secret*.json
+.env*
+
+# Runtime files
+runtime/
+*.mp4
+*.mp3
+*.wav
+*.srt
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
