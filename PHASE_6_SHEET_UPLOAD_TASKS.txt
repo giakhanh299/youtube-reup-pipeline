@@ -1,0 +1,21 @@
+Implement Phase 6: connect Google Sheet control plane to real YouTube API v3 upload.
+
+Before coding:
+- Read SHEET_COLUMNS.txt.
+- Map the upload workflow to the real sheet columns.
+
+Goals:
+1. Read upload jobs from Google Sheet.
+2. Use existing SheetRepository.
+3. Use existing YouTubeApiUploader.
+4. Upload rendered video as private by default.
+5. Write uploaded status, YouTube video ID, upload timestamp, and error message back to Google Sheet.
+6. Preserve current pipeline.py behavior.
+7. Add mocked tests only. Do not run real uploads in tests.
+
+Requirements:
+- Do not implement multi-account yet.
+- Do not implement scheduler yet.
+- Do not upload public videos by default.
+- Keep Docker smoke test working.
+- Update PROJECT_REVIEW.md.

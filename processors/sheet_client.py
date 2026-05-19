@@ -80,6 +80,18 @@ class SheetConfig:
                 cleaned.append(item)
         return cleaned
 
+    def rows_with_numbers(self, worksheet_name: str) -> list[tuple[int, dict]]:
+        if self._sh is None:
+            self.connect()
+        ws = self._sh.worksheet(worksheet_name)
+        data = ws.get_all_records()
+        cleaned: list[tuple[int, dict]] = []
+        for row_number, row in enumerate(data, start=2):
+            item = {_clean_key(k): _clean_value(v) for k, v in row.items()}
+            if any(str(v).strip() for v in item.values()):
+                cleaned.append((row_number, item))
+        return cleaned
+
     def map_by(self, worksheet_name: str, key_col: str) -> dict[str, dict]:
         result = {}
         for row in self.rows(worksheet_name):
@@ -108,6 +120,34 @@ class SheetConfig:
             updates.append({"range": gspread.utils.rowcol_to_a1(cell.row, output_col), "values": [[output_path]]})
         if error_col:
             updates.append({"range": gspread.utils.rowcol_to_a1(cell.row, error_col), "values": [[error[:1000]]]})
+        if updates:
+            ws.batch_update(updates)
+
+    def update_upload_result(
+        self,
+        worksheet_name: str,
+        row_number: int,
+        upload_status: str,
+        youtube_video_id: str = "",
+        upload_error: str = "",
+        upload_time: str = "",
+    ) -> None:
+        if self._sh is None:
+            self.connect()
+        import gspread
+        ws = self._sh.worksheet(worksheet_name)
+        headers = ws.row_values(1)
+        updates = []
+        values_by_column = {
+            "upload_status": upload_status,
+            "youtube_video_id": youtube_video_id,
+            "upload_error": upload_error[:1000],
+            "upload_time": upload_time,
+        }
+        for header, value in values_by_column.items():
+            if header in headers:
+                col = headers.index(header) + 1
+                updates.append({"range": gspread.utils.rowcol_to_a1(row_number, col), "values": [[value]]})
         if updates:
             ws.batch_update(updates)
 

@@ -1,0 +1,12 @@
+Sheet name: Video đã edit
+
+Column A: video_path
+Column B: title
+Column C: description
+Column D: tags
+Column E: categoryId
+Column F: privacyStatus
+Column G: upload_status
+Column H: youtube_video_id
+Column I: upload_error
+Column J: upload_time

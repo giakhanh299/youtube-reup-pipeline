@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
+import pickle
 
 from logs.structured_logger import NullLogger
 from repositories.queue_persistence import QueueJobState
@@ -77,7 +78,7 @@ class YouTubeApiUploader:
     ) -> "YouTubeApiUploader":
         return cls(
             credentials_path=settings.get("youtube_oauth_credentials_json", ""),
-            token_path=settings.get("youtube_oauth_token_json", ""),
+            token_path=settings.get("youtube_oauth_token_json") or settings.get("youtube_token_pickle_path", ""),
             chunk_size=int(settings.get("youtube_upload_chunk_size", -1)),
             retry_strategy=retry_strategy,
             logger=logger,
@@ -105,7 +106,11 @@ class YouTubeApiUploader:
         token = Path(self.token_path)
         credentials = None
         if token.exists():
-            credentials = Credentials.from_authorized_user_file(str(token), [YOUTUBE_UPLOAD_SCOPE])
+            if token.suffix.lower() == ".pickle":
+                with token.open("rb") as handle:
+                    credentials = pickle.load(handle)
+            else:
+                credentials = Credentials.from_authorized_user_file(str(token), [YOUTUBE_UPLOAD_SCOPE])
         if not credentials or not credentials.valid:
             if credentials and credentials.expired and credentials.refresh_token:
                 credentials.refresh(Request())
@@ -113,7 +118,11 @@ class YouTubeApiUploader:
                 flow = InstalledAppFlow.from_client_secrets_file(self.credentials_path, [YOUTUBE_UPLOAD_SCOPE])
                 credentials = flow.run_local_server(port=0)
             token.parent.mkdir(parents=True, exist_ok=True)
-            token.write_text(credentials.to_json(), encoding="utf-8")
+            if token.suffix.lower() == ".pickle":
+                with token.open("wb") as handle:
+                    pickle.dump(credentials, handle)
+            else:
+                token.write_text(credentials.to_json(), encoding="utf-8")
 
         self.client = build("youtube", "v3", credentials=credentials)
         return self.client

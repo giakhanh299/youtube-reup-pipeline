@@ -20,6 +20,12 @@ YT_YOUTUBE_OAUTH_CREDENTIALS_JSON=E:/path/to/oauth_client.json
 YT_YOUTUBE_OAUTH_TOKEN_JSON=runtime/state/youtube/token.json
 ```
 
+Legacy `.env` files using this value are also supported:
+
+```text
+YT_YOUTUBE_TOKEN_PICKLE_PATH=./secrets/youtube_token.pickle
+```
+
 `youtube_oauth_token_json` is created after the first successful OAuth flow and
 should be kept out of git.
 
@@ -33,6 +39,31 @@ title,description,tags,categoryId,privacyStatus
 
 `privacyStatus` defaults to `private` when omitted. `categoryId` defaults to
 `22`.
+
+## Sheet-Controlled Upload
+
+Phase 6 reads pending uploads from the sheet tab configured by
+`upload_sheet_name`, defaulting to:
+
+```text
+Video đã edit
+```
+
+Required columns:
+
+```text
+video_path,title,description,tags,categoryId,privacyStatus,upload_status,youtube_video_id,upload_error,upload_time
+```
+
+Run the isolated uploader:
+
+```text
+python scripts/upload_from_sheet.py
+```
+
+Rows with blank `upload_status` or `pending` are uploaded. The script writes
+`uploading`, then `uploaded` plus the YouTube video ID and upload timestamp. On
+failure it writes `failed` and a readable error message.
 
 ## Tests
 

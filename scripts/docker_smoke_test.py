@@ -22,6 +22,7 @@ REQUIRED_MODULES = [
     "services.render_service",
     "processors.folder_processor",
     "processors.queue_processor",
+    "processors.sheet_upload_processor",
     "integrations.selenium.browser_manager",
     "integrations.telegram.notifier",
     "integrations.youtube.youtube_api_uploader",

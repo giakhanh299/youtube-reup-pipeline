@@ -53,6 +53,21 @@ def apply_env_overrides(settings: dict, env: dict[str, str] | None = None, prefi
         env_key = f"{prefix}{key}".upper()
         if env_key in env_values:
             merged[key] = _coerce_like(current_value, env_values[env_key])
+
+    legacy_aliases = {
+        "YOUTUBE_TOKEN_PICKLE_PATH": ("youtube_oauth_token_json", "YOUTUBE_OAUTH_TOKEN_JSON"),
+        "YOUTUBE_DEFAULT_PRIVACY": ("youtube_default_privacy", "YOUTUBE_DEFAULT_PRIVACY"),
+        "YOUTUBE_CATEGORY_ID": ("youtube_default_category_id", "YOUTUBE_DEFAULT_CATEGORY_ID"),
+    }
+    for env_key, (setting_key, canonical_env_name) in legacy_aliases.items():
+        prefixed_key = f"{prefix}{env_key}"
+        canonical_prefixed_key = f"{prefix}{canonical_env_name}"
+        if canonical_prefixed_key in env_values:
+            continue
+        if prefixed_key in env_values:
+            merged[setting_key] = env_values[prefixed_key]
+        elif env_key in env_values:
+            merged[setting_key] = env_values[env_key]
     return merged
 
 

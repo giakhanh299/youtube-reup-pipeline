@@ -7,6 +7,17 @@ from processors.sheet_client import SheetConfig
 from repositories.sheet_repository import SheetRepository
 
 
+class FakeUploadSheet:
+    def __init__(self):
+        self.updated = None
+
+    def rows_with_numbers(self, worksheet_name: str):
+        return [(2, {"video_path": "video.mp4"})]
+
+    def update_upload_result(self, *args, **kwargs):
+        self.updated = (args, kwargs)
+
+
 class SheetRepositoryTests(unittest.TestCase):
     def setUp(self) -> None:
         self.root = Path(__file__).resolve().parents[1]
@@ -67,6 +78,24 @@ class SheetRepositoryTests(unittest.TestCase):
         self.assertEqual(merged["speed"], 1.02)
         self.assertFalse(merged["use_nvenc"])
         self.assertEqual(merged["blur_strength"], 30)
+
+    def test_upload_sheet_rows_and_updates_delegate_to_sheet_client(self) -> None:
+        fake_sheet = FakeUploadSheet()
+        repository = SheetRepository(fake_sheet, self.root)
+
+        rows = repository.load_upload_jobs("Video đã edit")
+        repository.update_upload_result(
+            "Video đã edit",
+            2,
+            "uploaded",
+            youtube_video_id="yt123",
+            upload_error="",
+            upload_time="2026-05-20T00:00:00+00:00",
+        )
+
+        self.assertEqual(rows, [(2, {"video_path": "video.mp4"})])
+        self.assertEqual(fake_sheet.updated[0][:3], ("Video đã edit", 2, "uploaded"))
+        self.assertEqual(fake_sheet.updated[1]["youtube_video_id"], "yt123")
 
 
 if __name__ == "__main__":

@@ -159,3 +159,32 @@ class SheetRepository:
             self.retry_strategy,
             "sheets_update_job_status",
         )
+
+    def load_upload_jobs(self, worksheet_name: str) -> list[tuple[int, dict]]:
+        return retry_google_api(
+            lambda: self.sheet.rows_with_numbers(worksheet_name),
+            self.retry_strategy,
+            "sheets_read_upload_jobs",
+        )
+
+    def update_upload_result(
+        self,
+        worksheet_name: str,
+        row_number: int,
+        upload_status: str,
+        youtube_video_id: str = "",
+        upload_error: str = "",
+        upload_time: str = "",
+    ) -> None:
+        retry_google_api(
+            lambda: self.sheet.update_upload_result(
+                worksheet_name,
+                row_number,
+                upload_status,
+                youtube_video_id=youtube_video_id,
+                upload_error=upload_error,
+                upload_time=upload_time,
+            ),
+            self.retry_strategy,
+            "sheets_update_upload_result",
+        )

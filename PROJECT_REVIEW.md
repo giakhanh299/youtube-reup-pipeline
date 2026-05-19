@@ -292,6 +292,34 @@ Upload architecture:
 - Google API libraries are imported lazily so module import and smoke tests do
   not require OAuth credentials.
 
+### Phase 6 - Sheet-Controlled Upload
+
+Phase 6 progress:
+
+- Added config compatibility for legacy `YT_YOUTUBE_TOKEN_PICKLE_PATH`.
+- The uploader now supports token files ending in `.pickle` as well as JSON
+  OAuth token files.
+- Added `processors/sheet_upload_processor.py`.
+- Added `scripts/upload_from_sheet.py` as an isolated upload runner.
+- Preserved `pipeline.py`; rendering behavior is unchanged.
+- Added generic upload-sheet read/write methods to `SheetRepository` and
+  `SheetConfig`.
+- Mapped the real upload sheet columns:
+  `video_path`, `title`, `description`, `tags`, `categoryId`, `privacyStatus`,
+  `upload_status`, `youtube_video_id`, `upload_error`, and `upload_time`.
+- Added mocked tests for config compatibility, repository delegation, and sheet
+  upload processing.
+
+Sheet upload flow:
+
+1. Read rows from `upload_sheet_name`, default `Video đã edit`.
+2. Select rows where `upload_status` is blank or `pending`.
+3. Upload `video_path` through `YouTubeApiUploader`.
+4. Default missing `privacyStatus` to `private`.
+5. Default missing `categoryId` to `22`.
+6. Write `uploading`, then `uploaded`, YouTube video ID, and UTC upload time.
+7. On failure, write `failed` and `upload_error`.
+
 ## Production-Ready Target Architecture
 
 ```text

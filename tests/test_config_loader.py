@@ -56,6 +56,35 @@ class ConfigLoaderTests(unittest.TestCase):
         self.assertEqual(settings["spreadsheet_id"], "new")
         self.assertTrue(settings["process_queue_only"])
 
+    def test_legacy_youtube_env_aliases_are_supported(self) -> None:
+        settings = {
+            "youtube_oauth_token_json": "runtime/state/youtube/token.json",
+            "youtube_default_privacy": "private",
+            "youtube_default_category_id": "22",
+        }
+        env = {
+            "YT_YOUTUBE_TOKEN_PICKLE_PATH": "./secrets/youtube_token.pickle",
+            "YOUTUBE_DEFAULT_PRIVACY": "unlisted",
+            "YOUTUBE_CATEGORY_ID": "24",
+        }
+
+        merged = apply_env_overrides(settings, env)
+
+        self.assertEqual(merged["youtube_oauth_token_json"], "./secrets/youtube_token.pickle")
+        self.assertEqual(merged["youtube_default_privacy"], "unlisted")
+        self.assertEqual(merged["youtube_default_category_id"], "24")
+
+    def test_canonical_youtube_token_env_wins_over_legacy_alias(self) -> None:
+        settings = {"youtube_oauth_token_json": "runtime/state/youtube/token.json"}
+        env = {
+            "YT_YOUTUBE_OAUTH_TOKEN_JSON": "./secrets/token.json",
+            "YT_YOUTUBE_TOKEN_PICKLE_PATH": "./secrets/youtube_token.pickle",
+        }
+
+        merged = apply_env_overrides(settings, env)
+
+        self.assertEqual(merged["youtube_oauth_token_json"], "./secrets/token.json")
+
 
 if __name__ == "__main__":
     unittest.main()
