@@ -507,6 +507,21 @@ docker compose up dashboard
 Dashboard architecture remains optional and decoupled. It is a monitoring and
 control-intent surface, not a business logic executor.
 
+### Sheet Snapshot Export
+
+Added `scripts/export_sheet_snapshot.py` for local Codex debugging and analysis.
+It reads the configured Google worksheet with the existing service-account
+authentication path and writes:
+
+```text
+runtime/sheet_snapshot.json
+runtime/sheet_snapshot.csv
+```
+
+The exporter is read-only, uses row 1 as headers, creates `runtime/` when
+needed, writes UTF-8 files, and avoids printing credentials or secrets. Mocked
+tests cover header parsing, sheet-name fallback, validation, and output writing.
+
 ## Production-Ready Target Architecture
 
 ```text

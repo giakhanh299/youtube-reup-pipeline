@@ -33,6 +33,7 @@ REQUIRED_MODULES = [
     "workers.multi_account_upload_worker",
     "scripts.scheduler_daemon",
     "scripts.dashboard",
+    "scripts.export_sheet_snapshot",
 ]
 
 
