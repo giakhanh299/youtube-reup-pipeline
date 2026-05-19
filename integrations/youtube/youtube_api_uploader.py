@@ -55,6 +55,7 @@ class YouTubeApiUploader:
         logger: Any = None,
         state_callback: Callable[[str, QueueJobState], None] | None = None,
         media_upload_factory: Callable[..., Any] | None = None,
+        progress_callback: Callable[[float], None] | None = None,
     ):
         self.client = client
         self.credentials_path = credentials_path
@@ -64,6 +65,7 @@ class YouTubeApiUploader:
         self.logger = logger or NullLogger()
         self.state_callback = state_callback
         self.media_upload_factory = media_upload_factory
+        self.progress_callback = progress_callback
 
     @classmethod
     def from_settings(
@@ -159,7 +161,11 @@ class YouTubeApiUploader:
 
         response = None
         while response is None:
-            _status, response = request.next_chunk()
+            status, response = request.next_chunk()
+            if status is not None and self.progress_callback:
+                progress = getattr(status, "progress", None)
+                if callable(progress):
+                    self.progress_callback(float(progress()))
         upload_id = str(response.get("id", "")).strip()
         if not upload_id:
             raise RuntimeError("YouTube API upload response did not include video id")

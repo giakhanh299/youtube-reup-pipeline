@@ -1,0 +1,14 @@
+Create a minimal real upload test script using the new YouTube API uploader.
+
+Requirements:
+- Use runtime/test/test.mp4
+- Upload as private
+- Do not integrate with queue yet
+- Keep script minimal and isolated
+- Print upload progress
+- Print uploaded YouTube video ID
+- Fail clearly with readable errors
+- Reuse existing uploader architecture
+- Use current .env configuration
+- Do not modify existing business logic
+- Add comments explaining how to run the script

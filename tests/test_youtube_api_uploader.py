@@ -9,13 +9,24 @@ from utils.retry import RetryStrategy
 
 
 class FakeRequest:
-    def __init__(self, response: dict):
+    def __init__(self, response: dict, statuses=None):
         self.response = response
+        self.statuses = list(statuses or [])
         self.calls = 0
 
     def next_chunk(self):
         self.calls += 1
+        if self.statuses:
+            return self.statuses.pop(0), None
         return None, self.response
+
+
+class FakeStatus:
+    def __init__(self, value: float):
+        self.value = value
+
+    def progress(self) -> float:
+        return self.value
 
 
 class FakeVideos:
@@ -106,6 +117,23 @@ class YouTubeApiUploaderTests(unittest.TestCase):
 
         self.assertEqual(upload_id, "yt123")
         self.assertEqual(attempts["count"], 2)
+
+    def test_upload_reports_chunk_progress(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            video = Path(temp) / "ready.mp4"
+            video.write_bytes(b"fake video")
+            progress = []
+            request = FakeRequest({"id": "yt123"}, statuses=[FakeStatus(0.25), FakeStatus(0.75)])
+            uploader = YouTubeApiUploader(
+                client=FakeClient(request),
+                media_upload_factory=FakeMediaFileUpload,
+                progress_callback=progress.append,
+            )
+
+            upload_id = uploader.upload(QueueJobState(job_id="job_1", status="READY_UPLOAD", output_path=str(video)))
+
+        self.assertEqual(upload_id, "yt123")
+        self.assertEqual(progress, [0.25, 0.75])
 
 
 if __name__ == "__main__":
