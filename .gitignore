@@ -13,6 +13,8 @@ service_account*.json
 credentials*.json
 client_secret*.json
 .env*
+secrets/
+*.pickle
 
 # Runtime files
 runtime/
