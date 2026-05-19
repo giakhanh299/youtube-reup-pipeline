@@ -1,0 +1,15 @@
+services:
+  app:
+    build: .
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - ./runtime/logs:/app/runtime/logs
+      - ./runtime/state:/app/runtime/state
+      - ./runtime/temp:/app/runtime/temp
+      - ./configs:/app/configs:ro
+    command: ["python", "pipeline.py"]
+    restart: "no"

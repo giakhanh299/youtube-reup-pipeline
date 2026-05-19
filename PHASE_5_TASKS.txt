@@ -1,0 +1,58 @@
+PHASE_5_TASKS
+
+Implement Phase 5: safe YouTube upload runtime.
+
+Goals:
+1. Create stable upload runtime.
+2. Add resumable upload state.
+3. Add upload retry handling.
+4. Add account/session isolation.
+5. Preserve current workflow stability.
+
+Tasks:
+
+1. Upload Runtime
+Implement safe upload execution flow:
+- upload start
+- upload success
+- upload failure
+- retry handling
+- timeout handling
+
+2. Session Management
+Create:
+- session persistence
+- cookie isolation
+- account profiles
+- browser recovery
+
+3. Upload State Tracking
+Track:
+- pending
+- rendering
+- uploading
+- uploaded
+- failed
+- retrying
+
+4. Retry Strategy
+Add:
+- exponential backoff
+- upload retry limits
+- crash recovery
+
+5. Logging
+Add:
+- upload logs
+- account logs
+- retry logs
+- session logs
+
+6. Tests
+Add tests where possible.
+
+IMPORTANT:
+- Do not implement scaling workers yet.
+- Do not implement multi-account parallel uploads yet.
+- Prioritize reliability over speed.
+- Keep backward compatibility.
