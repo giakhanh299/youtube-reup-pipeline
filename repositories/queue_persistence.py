@@ -17,6 +17,12 @@ class QueueJobState:
     output_path: str = ""
     error: str = ""
     retry_count: int = 0
+    upload_state: str = ""
+    title: str = ""
+    description: str = ""
+    tags: list[str] | None = None
+    category_id: str = ""
+    privacy_status: str = ""
 
 
 class QueuePersistence(Protocol):
@@ -71,6 +77,8 @@ class JsonQueuePersistence:
         if not path.exists():
             return None
         data = json.loads(path.read_text(encoding="utf-8"))
+        if "tags" not in data:
+            data["tags"] = None
         return QueueJobState(**data)
 
     def mark_failed(self, job_id: str, error: str) -> None:
@@ -85,9 +93,15 @@ class JsonQueuePersistence:
                 output_path=existing.output_path,
                 error=error,
                 retry_count=retry_count,
+                upload_state="failed",
+                title=existing.title,
+                description=existing.description,
+                tags=existing.tags,
+                category_id=existing.category_id,
+                privacy_status=existing.privacy_status,
             )
         else:
-            state = QueueJobState(job_id=job_id, status="ERROR", error=error, retry_count=1)
+            state = QueueJobState(job_id=job_id, status="ERROR", error=error, retry_count=1, upload_state="failed")
         self.save_job_state(state)
 
     def failed_jobs(self) -> list[QueueJobState]:

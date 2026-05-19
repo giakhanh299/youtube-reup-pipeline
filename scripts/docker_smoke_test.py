@@ -24,6 +24,7 @@ REQUIRED_MODULES = [
     "processors.queue_processor",
     "integrations.selenium.browser_manager",
     "integrations.telegram.notifier",
+    "integrations.youtube.youtube_api_uploader",
     "workers.upload_worker",
 ]
 

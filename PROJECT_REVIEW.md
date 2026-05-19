@@ -259,6 +259,39 @@ Phase 4 results:
 - Let upload tooling consume `READY_UPLOAD` jobs.
 - Add upload-safe metadata fields later without changing render jobs.
 
+### Phase 5 - YouTube Data API Upload
+
+Phase 5 progress:
+
+- Added `integrations/youtube/youtube_api_uploader.py`.
+- Implemented a YouTube Data API v3 resumable upload client.
+- Kept Selenium optional and outside the upload flow.
+- Preserved `UploadWorker`'s injected-client architecture.
+- Added upload lifecycle tracking with lowercase states:
+  `pending`, `uploading`, `uploaded`, `failed`, and `retrying`.
+- Kept existing queue status compatibility with `READY_UPLOAD`, `UPLOADING`,
+  `UPLOADED`, and `ERROR`.
+- Added upload metadata fields to persisted queue snapshots:
+  `title`, `description`, `tags`, `category_id`, and `privacy_status`.
+- Added OAuth credential settings:
+  `youtube_oauth_credentials_json`, `youtube_oauth_token_json`, and
+  `youtube_upload_chunk_size`.
+- Updated `VIDEO_QUEUE` template with upload metadata columns.
+- Added `YOUTUBE_API_SETUP.md`.
+- Added mocked uploader tests; tests do not perform real uploads.
+
+Upload architecture:
+
+- `QueueProcessor` still renders videos and marks completed render jobs as
+  `READY_UPLOAD`.
+- `UploadWorker` consumes `READY_UPLOAD` queue states and delegates upload to an
+  injected client.
+- `YouTubeApiUploader` implements that client contract with
+  `upload(job) -> video_id`.
+- The uploader defaults `privacyStatus` to `private` and `categoryId` to `22`.
+- Google API libraries are imported lazily so module import and smoke tests do
+  not require OAuth credentials.
+
 ## Production-Ready Target Architecture
 
 ```text

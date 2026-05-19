@@ -90,6 +90,11 @@ class QueueProcessor:
                         channel_id=channel_id,
                         video_path=str(video),
                         output_path=output,
+                        title=str(job.get("title", "")).strip(),
+                        description=str(job.get("description", "")).strip(),
+                        tags=[item.strip() for item in str(job.get("tags", "")).split(",") if item.strip()],
+                        category_id=str(job.get("categoryId", job.get("category_id", ""))).strip(),
+                        privacy_status=str(job.get("privacyStatus", job.get("privacy_status", ""))).strip(),
                     )
                 )
             except Exception as exc:

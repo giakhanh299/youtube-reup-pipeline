@@ -11,5 +11,8 @@
   "queue_status_new": "NEW",
   "queue_status_processing": "PROCESSING",
   "queue_status_done": "READY_UPLOAD",
-  "queue_status_error": "ERROR"
+  "queue_status_error": "ERROR",
+  "youtube_oauth_credentials_json": "",
+  "youtube_oauth_token_json": "runtime/state/youtube/token.json",
+  "youtube_upload_chunk_size": -1
 }

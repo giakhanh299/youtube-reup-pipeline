@@ -1,0 +1,31 @@
+Implement Phase 5: Real YouTube Data API v3 upload.
+
+Context:
+This project uploads videos using YouTube Data API v3, not Selenium.
+Selenium should remain optional and must not be used for upload flow.
+
+Goals:
+1. Implement real YouTube API v3 resumable upload.
+2. Keep current worker architecture.
+3. Keep backward compatibility.
+4. Add tests with mocked API/client.
+5. Do not run real uploads during tests.
+
+Tasks:
+- Create integrations/youtube/youtube_api_uploader.py
+- Implement resumable upload support
+- Support title, description, tags, categoryId, privacyStatus
+- Default privacyStatus should be private
+- Add upload state tracking: pending, uploading, uploaded, failed, retrying
+- Integrate uploader into workers/upload_worker.py
+- Add retry handling for API upload failures
+- Add config/env loading for OAuth credentials/token paths
+- Add clear documentation for setting up YouTube API credentials
+- Add tests using mocks only
+- Update PROJECT_REVIEW.md
+
+Important:
+- Do not remove Selenium.
+- Do not implement multi-account scaling yet.
+- Do not upload real videos in tests.
+- Keep Docker smoke test working.

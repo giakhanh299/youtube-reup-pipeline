@@ -1,2 +1,4 @@
 gspread>=6.0.0
 google-cloud-texttospeech>=2.16.0
+google-api-python-client>=2.120.0
+google-auth-oauthlib>=1.2.0

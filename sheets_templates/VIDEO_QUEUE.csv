@@ -1,2 +1,2 @@
-job_id,status,channel_id,video_path,text_path,output_path,error
-job_001,NEW,kenh_1,G:/My Drive/Video Doujin/VIDEO IN PUT GIAKHANH CHANEL/DA_XU_LY/abc.mp4,G:/My Drive/Video Doujin/VIDEO IN PUT GIAKHANH CHANEL/DA_XU_LY/abc_vi.srt,,
+job_id,status,channel_id,video_path,text_path,output_path,error,title,description,tags,categoryId,privacyStatus
+job_001,NEW,kenh_1,G:/My Drive/Video Doujin/VIDEO IN PUT GIAKHANH CHANEL/DA_XU_LY/abc.mp4,G:/My Drive/Video Doujin/VIDEO IN PUT GIAKHANH CHANEL/DA_XU_LY/abc_vi.srt,,,Sample title,Sample description,"tag1,tag2",22,private
