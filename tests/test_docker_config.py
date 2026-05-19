@@ -12,9 +12,13 @@ class DockerConfigTests(unittest.TestCase):
         compose = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
 
         self.assertIn("  app:", compose)
+        self.assertIn("  scheduler:", compose)
+        self.assertIn("  dashboard:", compose)
         self.assertIn("./runtime/logs:/app/runtime/logs", compose)
         self.assertIn("./runtime/state:/app/runtime/state", compose)
         self.assertIn('command: ["python", "pipeline.py"]', compose)
+        self.assertIn('command: ["python", "scripts/scheduler_daemon.py"]', compose)
+        self.assertIn('command: ["python", "scripts/dashboard.py"]', compose)
 
     def test_dockerfile_installs_ffmpeg_and_uses_existing_entrypoint(self) -> None:
         dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")

@@ -9,6 +9,8 @@
 
   "upload_sheet_name": "YouTube Upload Queue",
 
+  "channel_config_sheet_name": "Channel Config",
+
   "batch_size": 10,
 
   "video_exts": [".mp4", ".mkv", ".avi", ".mov"],
@@ -33,6 +35,8 @@
 
   "youtube_upload_chunk_size": -1,
 
+  "upload_worker_count": 1,
+
   "youtube_default_privacy": "private",
 
   "youtube_default_category_id": "22",
@@ -51,5 +55,33 @@
 
   "upload_timeout_seconds": 3600,
 
-  "upload_allowed_exts": [".mp4", ".mkv", ".avi", ".mov"]
+  "upload_allowed_exts": [".mp4", ".mkv", ".avi", ".mov"],
+
+  "render_sheet_name": "Douyin Render",
+
+  "render_output_dir": "runtime/rendered",
+
+  "render_temp_dir": "runtime/temp/douyin_render",
+
+  "render_status_new": "pending",
+
+  "render_status_processing": "rendering",
+
+  "render_status_done": "ready",
+
+  "render_status_error": "failed",
+
+  "render_allowed_exts": [".mp4", ".mkv", ".avi", ".mov"],
+
+  "scheduler_processing_interval_seconds": 300,
+
+  "scheduler_upload_interval_seconds": 300,
+
+  "scheduler_retry_interval_seconds": 60,
+
+  "scheduler_heartbeat_interval_seconds": 60,
+
+  "dashboard_host": "127.0.0.1",
+
+  "dashboard_port": 8080
 }

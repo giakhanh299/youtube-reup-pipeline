@@ -160,6 +160,34 @@ class SheetConfig:
         if updates:
             ws.batch_update(updates)
 
+    def update_render_result(
+        self,
+        worksheet_name: str,
+        row_number: int,
+        render_status: str,
+        audio_path: str = "",
+        rendered_video_path: str = "",
+        render_error: str = "",
+    ) -> None:
+        if self._sh is None:
+            self.connect()
+        import gspread
+        ws = self._sh.worksheet(worksheet_name)
+        headers = ws.row_values(1)
+        updates = []
+        values_by_column = {
+            "render_status": render_status,
+            "audio_path": audio_path,
+            "rendered_video_path": rendered_video_path,
+            "render_error": render_error[:1000],
+        }
+        for header, value in values_by_column.items():
+            if header in headers:
+                col = headers.index(header) + 1
+                updates.append({"range": gspread.utils.rowcol_to_a1(row_number, col), "values": [[value]]})
+        if updates:
+            ws.batch_update(updates)
+
 
 def load_csv_rows(path: str | Path) -> list[dict]:
     path = Path(path)

@@ -23,6 +23,9 @@ class QueueJobState:
     tags: list[str] | None = None
     category_id: str = ""
     privacy_status: str = ""
+    channel_key: str = ""
+    account_name: str = ""
+    youtube_token_path: str = ""
 
 
 class QueuePersistence(Protocol):

@@ -9,13 +9,20 @@ from processors.sheet_upload_processor import SheetUploadProcessor
 
 
 class FakeSheetRepository:
-    def __init__(self, rows):
+    def __init__(self, rows, channel_configs=None):
         self.rows = rows
+        self.channel_configs = channel_configs
         self.updates = []
 
     def load_upload_jobs(self, worksheet_name: str):
         self.loaded_worksheet_name = worksheet_name
         return self.rows
+
+    def load_upload_channel_configs(self, worksheet_name: str = "Channel Config"):
+        self.loaded_channel_config_sheet_name = worksheet_name
+        if self.channel_configs is None:
+            raise RuntimeError("no channel config")
+        return self.channel_configs
 
     def update_upload_result(
         self,
@@ -123,6 +130,58 @@ class SheetUploadProcessorTests(unittest.TestCase):
         self.assertEqual(results, [])
         self.assertEqual(repository.updates, [])
         self.assertEqual(uploader.jobs, [])
+
+    def test_applies_channel_defaults_when_channel_key_is_present(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            video = Path(temp) / "clip.mp4"
+            video.write_bytes(b"fake")
+            repository = FakeSheetRepository(
+                [(2, {"video_path": str(video), "channel_key": "main", "upload_status": "pending"})],
+                {
+                    "main": {
+                        "channel_key": "main",
+                        "channel_name": "Main Channel",
+                        "account_name": "default",
+                        "default_privacyStatus": "private",
+                        "default_categoryId": "24",
+                        "tags_default": "douyin,reup",
+                        "title_template": "{channel_name} - {stem}",
+                        "description_template": "Uploaded for {channel_name}",
+                    }
+                },
+            )
+            uploader = FakeUploader()
+
+            SheetUploadProcessor(repository, uploader).process(
+                {
+                    "upload_sheet_name": "Upload Queue",
+                    "channel_config_sheet_name": "Channel Config",
+                    "upload_status_new": "pending",
+                }
+            )
+
+        self.assertEqual(repository.loaded_channel_config_sheet_name, "Channel Config")
+        self.assertEqual(uploader.jobs[0].privacy_status, "private")
+        self.assertEqual(uploader.jobs[0].category_id, "24")
+        self.assertEqual(uploader.jobs[0].tags, ["douyin", "reup"])
+        self.assertEqual(uploader.jobs[0].title, "Main Channel - clip")
+        self.assertEqual(uploader.jobs[0].description, "Uploaded for Main Channel")
+        self.assertEqual(uploader.jobs[0].channel_key, "main")
+        self.assertEqual(uploader.jobs[0].account_name, "default")
+
+    def test_missing_channel_key_config_fails_readably(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            video = Path(temp) / "clip.mp4"
+            video.write_bytes(b"fake")
+            repository = FakeSheetRepository(
+                [(2, {"video_path": str(video), "channel_key": "missing", "upload_status": "pending"})],
+                {"main": {"channel_key": "main"}},
+            )
+
+            results = SheetUploadProcessor(repository, FakeUploader()).process({"upload_status_new": "pending"})
+
+        self.assertEqual(results[0].status, "failed")
+        self.assertIn("channel_key not found or disabled", results[0].error)
 
     def test_writes_failed_status_and_error(self) -> None:
         repository = FakeSheetRepository([(2, {"upload_status": "pending", "video_path": "missing.mp4"})])

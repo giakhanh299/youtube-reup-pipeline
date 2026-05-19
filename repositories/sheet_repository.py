@@ -81,6 +81,26 @@ class SheetRepository:
             "raw": row,
         }
 
+    def normalize_upload_channel_config(self, row: dict) -> dict:
+        return {
+            "channel_key": str(row.get("channel_key", "")).strip(),
+            "channel_name": str(row.get("channel_name", "")).strip(),
+            "account_name": str(row.get("account_name", "")).strip(),
+            "youtube_token_path": self.resolve_path(row.get("youtube_token_path", "")),
+            "voice_name": str(row.get("voice_name", "")).strip(),
+            "voice_speed": to_float(row.get("voice_speed"), 1.0),
+            "voice_pitch": to_float(row.get("voice_pitch"), 0.0),
+            "language": str(row.get("language", "")).strip(),
+            "default_categoryId": str(row.get("default_categoryId", "")).strip(),
+            "default_privacyStatus": str(row.get("default_privacyStatus", "")).strip(),
+            "title_template": str(row.get("title_template", "")).strip(),
+            "description_template": str(row.get("description_template", "")).strip(),
+            "tags_default": str(row.get("tags_default", "")).strip(),
+            "enabled": to_bool(row.get("enabled"), True),
+            "notes": str(row.get("notes", "")).strip(),
+            "raw": row,
+        }
+
     def merge_pack_into_channel(
         self,
         channel: dict,
@@ -195,4 +215,46 @@ class SheetRepository:
             ),
             self.retry_strategy,
             "sheets_update_upload_result",
+        )
+
+    def load_render_jobs(self, worksheet_name: str) -> list[tuple[int, dict]]:
+        return retry_google_api(
+            lambda: self.sheet.rows_with_numbers(worksheet_name),
+            self.retry_strategy,
+            "sheets_read_render_jobs",
+        )
+
+    def load_upload_channel_configs(self, worksheet_name: str = "Channel Config") -> dict[str, dict]:
+        rows = retry_google_api(
+            lambda: self.sheet.map_by(worksheet_name, "channel_key"),
+            self.retry_strategy,
+            "sheets_read_channel_config_upload",
+        )
+        configs = {}
+        for key, row in rows.items():
+            cfg = self.normalize_upload_channel_config(row)
+            if cfg["enabled"]:
+                configs[key] = cfg
+        return configs
+
+    def update_render_result(
+        self,
+        worksheet_name: str,
+        row_number: int,
+        render_status: str,
+        audio_path: str = "",
+        rendered_video_path: str = "",
+        render_error: str = "",
+    ) -> None:
+        retry_google_api(
+            lambda: self.sheet.update_render_result(
+                worksheet_name,
+                row_number,
+                render_status,
+                audio_path=audio_path,
+                rendered_video_path=rendered_video_path,
+                render_error=render_error,
+            ),
+            self.retry_strategy,
+            "sheets_update_render_result",
         )

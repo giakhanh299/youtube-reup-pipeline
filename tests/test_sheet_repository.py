@@ -17,6 +17,9 @@ class FakeUploadSheet:
     def update_upload_result(self, *args, **kwargs):
         self.updated = (args, kwargs)
 
+    def update_render_result(self, *args, **kwargs):
+        self.render_updated = (args, kwargs)
+
 
 class SheetRepositoryTests(unittest.TestCase):
     def setUp(self) -> None:
@@ -96,6 +99,45 @@ class SheetRepositoryTests(unittest.TestCase):
         self.assertEqual(rows, [(2, {"video_path": "video.mp4"})])
         self.assertEqual(fake_sheet.updated[0][:3], ("Video đã edit", 2, "uploaded"))
         self.assertEqual(fake_sheet.updated[1]["youtube_video_id"], "yt123")
+
+    def test_render_sheet_rows_and_updates_delegate_to_sheet_client(self) -> None:
+        fake_sheet = FakeUploadSheet()
+        repository = SheetRepository(fake_sheet, self.root)
+
+        rows = repository.load_render_jobs("Douyin Render")
+        repository.update_render_result(
+            "Douyin Render",
+            2,
+            "ready",
+            audio_path="audio.m4a",
+            rendered_video_path="out.mp4",
+            render_error="",
+        )
+
+        self.assertEqual(rows, [(2, {"video_path": "video.mp4"})])
+        self.assertEqual(fake_sheet.render_updated[0][:3], ("Douyin Render", 2, "ready"))
+        self.assertEqual(fake_sheet.render_updated[1]["rendered_video_path"], "out.mp4")
+
+    def test_load_upload_channel_configs_returns_enabled_configs_only(self) -> None:
+        class FakeChannelSheet:
+            def map_by(self, worksheet_name, key_col):
+                return {
+                    "main": {
+                        "channel_key": "main",
+                        "enabled": "TRUE",
+                        "default_privacyStatus": "private",
+                        "default_categoryId": "22",
+                    },
+                    "disabled": {"channel_key": "disabled", "enabled": "FALSE"},
+                }
+
+        repository = SheetRepository(FakeChannelSheet(), self.root)
+
+        configs = repository.load_upload_channel_configs("Channel Config")
+
+        self.assertIn("main", configs)
+        self.assertNotIn("disabled", configs)
+        self.assertEqual(configs["main"]["default_privacyStatus"], "private")
 
 
 if __name__ == "__main__":

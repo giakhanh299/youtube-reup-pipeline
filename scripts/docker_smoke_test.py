@@ -20,13 +20,19 @@ REQUIRED_MODULES = [
     "services.text_service",
     "services.tts_service",
     "services.render_service",
+    "services.scheduler_service",
+    "services.dashboard_service",
     "processors.folder_processor",
     "processors.queue_processor",
     "processors.sheet_upload_processor",
+    "processors.douyin_render_processor",
     "integrations.selenium.browser_manager",
     "integrations.telegram.notifier",
     "integrations.youtube.youtube_api_uploader",
     "workers.upload_worker",
+    "workers.multi_account_upload_worker",
+    "scripts.scheduler_daemon",
+    "scripts.dashboard",
 ]
 
 

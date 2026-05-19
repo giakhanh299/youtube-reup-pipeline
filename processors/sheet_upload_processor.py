@@ -118,6 +118,9 @@ class SheetUploadProcessor:
             tags=parse_tags(row.get("tags", "")),
             category_id=category_id or "22",
             privacy_status=privacy_status or "private",
+            channel_key=str(row.get("channel_key", "")).strip(),
+            account_name=str(row.get("account_name", "")).strip(),
+            youtube_token_path=str(row.get("youtube_token_path", "")).strip(),
         )
 
     def _upload_with_timeout(self, job: QueueJobState, settings: dict) -> str:
@@ -134,6 +137,55 @@ class SheetUploadProcessor:
         finally:
             executor.shutdown(wait=False, cancel_futures=True)
 
+    def _load_channel_configs(self, settings: dict) -> dict[str, dict]:
+        if not hasattr(self.sheet_repository, "load_upload_channel_configs"):
+            return {}
+        try:
+            sheet_name = settings.get("channel_config_sheet_name", "Channel Config")
+            return self.sheet_repository.load_upload_channel_configs(sheet_name)
+        except Exception as exc:
+            self.logger.error("channel_config_load_failed", error=str(exc))
+            return {}
+
+    def _apply_template(self, template: str, row_value: str, stem: str, channel_cfg: dict) -> str:
+        if not template:
+            return row_value
+        values = {
+            "title": row_value or stem,
+            "stem": stem,
+            "channel_name": channel_cfg.get("channel_name", ""),
+            "channel_key": channel_cfg.get("channel_key", ""),
+            "account_name": channel_cfg.get("account_name", ""),
+        }
+        try:
+            return template.format(**values)
+        except Exception:
+            return row_value or stem
+
+    def _merge_channel_defaults(self, row: dict, channel_cfg: dict, settings: dict, source_stem: str) -> dict:
+        merged = dict(row)
+        if not channel_cfg:
+            return merged
+        if not str(merged.get("privacyStatus", "")).strip():
+            merged["privacyStatus"] = channel_cfg.get("default_privacyStatus", "") or settings.get("youtube_default_privacy", "private")
+        if not str(merged.get("categoryId", "")).strip():
+            merged["categoryId"] = channel_cfg.get("default_categoryId", "") or settings.get("youtube_default_category_id", "22")
+        if not str(merged.get("tags", "")).strip():
+            merged["tags"] = channel_cfg.get("tags_default", "")
+        merged["channel_key"] = merged.get("channel_key", "") or channel_cfg.get("channel_key", "")
+        merged["account_name"] = merged.get("account_name", "") or channel_cfg.get("account_name", "")
+        merged["youtube_token_path"] = merged.get("youtube_token_path", "") or channel_cfg.get("youtube_token_path", "")
+        title = str(merged.get("title", "")).strip()
+        merged["title"] = self._apply_template(channel_cfg.get("title_template", ""), title, source_stem, channel_cfg)
+        description = str(merged.get("description", "")).strip()
+        merged["description"] = self._apply_template(
+            channel_cfg.get("description_template", ""),
+            description,
+            source_stem,
+            channel_cfg,
+        )
+        return merged
+
     def process(self, settings: dict) -> list[SheetUploadResult]:
         worksheet_name = settings.get("upload_sheet_name", "Video đã edit")
         pending_status = str(settings.get("upload_status_new", "pending")).strip().lower()
@@ -142,12 +194,21 @@ class SheetUploadProcessor:
         error_status = settings.get("upload_status_error", "failed")
 
         results: list[SheetUploadResult] = []
+        channel_configs = self._load_channel_configs(settings)
         for row_number, row in self.sheet_repository.load_upload_jobs(worksheet_name):
             if not self._should_process_row(row, settings):
                 continue
             video_path = str(row.get("video_path", "")).strip()
             retry_count = self._to_int(row.get("retry_count", 0))
             try:
+                channel_key = str(row.get("channel_key", "")).strip()
+                channel_cfg = {}
+                if channel_key:
+                    if channel_key not in channel_configs:
+                        raise ValueError(f"channel_key not found or disabled: {channel_key}")
+                    channel_cfg = channel_configs[channel_key]
+                source_stem = Path(video_path).stem if video_path else ""
+                row = self._merge_channel_defaults(row, channel_cfg, settings, source_stem)
                 job = self._job_from_row(row_number, row, settings)
                 started_at = self._now()
                 self.sheet_repository.update_upload_result(

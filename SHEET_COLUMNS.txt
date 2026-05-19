@@ -1,16 +1,35 @@
-Sheet name: Video đã edit
+Sheet name: Video da edit
 
 Column A: video_path
-Column B: title
-Column C: description
-Column D: tags
-Column E: categoryId
-Column F: privacyStatus
-Column G: upload_status
-Column H: youtube_video_id
-Column I: upload_error
-Column J: upload_time
-Column K: retry_count
-Column L: last_error
-Column M: upload_started_at
-Column N: upload_finished_at
+Column B: channel_key
+Column C: title
+Column D: description
+Column E: tags
+Column F: categoryId
+Column G: privacyStatus
+Column H: upload_status
+Column I: youtube_video_id
+Column J: upload_error
+Column K: upload_time
+Column L: retry_count
+Column M: last_error
+Column N: upload_started_at
+Column O: upload_finished_at
+
+Sheet name: Channel Config
+
+channel_key
+channel_name
+account_name
+youtube_token_path
+voice_name
+voice_speed
+voice_pitch
+language
+default_categoryId
+default_privacyStatus
+title_template
+description_template
+tags_default
+enabled
+notes

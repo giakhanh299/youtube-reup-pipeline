@@ -344,6 +344,169 @@ Phase 7 remains intentionally single-worker. It prevents common duplicate
 uploads and recovers interrupted rows, but it does not add distributed locks or
 multi-account scaling.
 
+### Phase 8 - Douyin Render Pipeline
+
+Phase 8 progress:
+
+- Added `processors/douyin_render_processor.py`.
+- Added `scripts/render_douyin_from_sheet.py`.
+- Added `sheets_templates/DOUYIN_RENDER.csv`.
+- Added SheetRepository methods for render job reads and render result writes.
+- Added FFmpeg-backed helpers for source validation, metadata extraction,
+  original audio extraction, optional TTS audio creation, and final video render.
+- Kept upload flow unchanged; rendering only writes render results back to the
+  configured render sheet.
+- Added mocked tests for pending-row rendering, TTS audio selection, ready-row
+  skips, missing source validation, unsupported extension validation, and
+  repository delegation.
+
+Render sheet columns:
+
+```text
+source_video_path,audio_path,rendered_video_path,render_status,render_error,
+voice_name,voice_speed,voice_pitch,language,tts_text
+```
+
+Render flow:
+
+1. Read rows from `render_sheet_name`, default `Douyin Render`.
+2. Process rows where `render_status` is blank or `pending`.
+3. Validate source file existence and extension.
+4. Extract metadata with `ffprobe` when available.
+5. Use TTS audio when text is provided, otherwise use existing `audio_path` or
+   extract original audio with FFmpeg.
+6. Render final output to `render_output_dir`.
+7. Write `render_status=ready`, `audio_path`, and `rendered_video_path`, or
+   write `render_status=failed` and `render_error`.
+
+### Phase 9 - Channel Config Foundation
+
+Phase 9 progress:
+
+- Added support for a separate `Channel Config` Google Sheet tab.
+- Added `SheetRepository.load_upload_channel_configs()`.
+- Added enabled-only channel config normalization for upload defaults.
+- Added optional `channel_key` support in upload queue rows.
+- Kept backward compatibility: rows without `channel_key` still use existing
+  global defaults.
+- Added per-channel default application for privacy, category, tags, title
+  templates, and description templates.
+- Added `sheets_templates/CHANNEL_CONFIG_UPLOAD.csv`.
+- Added mocked tests for enabled-only config loading, channel defaults, missing
+  channel handling, and no-channel backward compatibility.
+
+Channel Config columns:
+
+```text
+channel_key,channel_name,account_name,youtube_token_path,voice_name,
+voice_speed,voice_pitch,language,default_categoryId,default_privacyStatus,
+title_template,description_template,tags_default,enabled,notes
+```
+
+Upload queue change:
+
+- `channel_key` is optional.
+- When present, it must match an enabled `Channel Config` row.
+- When absent, existing settings are used.
+- Missing `privacyStatus` still defaults to `private`.
+
+### Phase 10 - Multi-Account Upload Foundation
+
+Phase 10 progress:
+
+- Added `workers/multi_account_upload_worker.py`.
+- Added `MultiAccountUploader`, a safe routing wrapper that implements the same
+  `upload(job) -> video_id` contract as the single-account uploader.
+- Added account metadata to `QueueJobState`: `channel_key`, `account_name`, and
+  `youtube_token_path`.
+- Upload jobs now inherit account metadata from `Channel Config` when
+  `channel_key` is present.
+- The router caches one uploader instance per account and applies the matching
+  `youtube_token_path` to that account's uploader settings.
+- Added per-account locks so uploads for the same account cannot run through the
+  same router concurrently.
+- Added token conflict protection: one account cannot be reused with a different
+  token path inside the same router instance.
+- Added `upload_worker_count` as a configurable assignment hint; default remains
+  single-worker behavior.
+- Added mocked tests for account routing, uploader reuse, token conflict
+  protection, and backward-compatible default account routing.
+
+Phase 10 does not add distributed cloud workers or parallel scheduler execution.
+Single-account upload remains functional because `MultiAccountUploader` defaults
+to the configured global token path when no account metadata is present.
+
+### Phase 11 - Scheduler And Automation Daemon
+
+Phase 11 progress:
+
+- Added `services/scheduler_service.py`.
+- Added `scripts/scheduler_daemon.py`.
+- Added a `scheduler` service to `docker-compose.yml`.
+- Added configurable intervals:
+  `scheduler_processing_interval_seconds`,
+  `scheduler_upload_interval_seconds`,
+  `scheduler_retry_interval_seconds`, and
+  `scheduler_heartbeat_interval_seconds`.
+- Scheduler tasks run cooperatively in a continuous loop with graceful shutdown
+  via SIGINT/SIGTERM.
+- Added heartbeat logging through the existing structured logger.
+- Added task result counts and failure counts for runtime monitoring.
+- Added retry interval behavior for failed task cycles.
+- Scheduler wiring uses `DouyinRenderProcessor` followed by
+  `SheetUploadProcessor` with `MultiAccountUploader`.
+- Crash recovery remains in the processors: render/upload rows are skipped,
+  retried, or recovered based on sheet status and timestamps.
+- Added mocked tests for intervals, retry scheduling, heartbeat logging, and
+  Docker Compose scheduler config.
+
+Scheduler command:
+
+```text
+python scripts/scheduler_daemon.py
+```
+
+Docker scheduler command:
+
+```text
+docker compose up scheduler
+```
+
+### Phase 12 - Optional Dashboard
+
+Phase 12 progress:
+
+- Added `services/dashboard_service.py`.
+- Added `scripts/dashboard.py`.
+- Added a `dashboard` service to `docker-compose.yml`.
+- Dashboard uses only the standard library HTTP server.
+- Dashboard reads local runtime queue snapshots and structured JSONL logs.
+- Dashboard exposes:
+  - `GET /` for the HTML UI.
+  - `GET /api/status` for queue counts, jobs, account usage, retry counts,
+    throughput counters, and log tails.
+  - `POST /api/control` for control intents: `retry`, `skip`, `pause`, and
+    `resume`.
+- Dashboard controls write local intent files under `runtime/state/dashboard`;
+  they do not call render/upload business logic directly.
+- Added mocked/lightweight tests for queue aggregation, log reading, control
+  event writing, pause state writing, and invalid action validation.
+
+Dashboard command:
+
+```text
+python scripts/dashboard.py
+```
+
+Docker dashboard command:
+
+```text
+docker compose up dashboard
+```
+
+Dashboard architecture remains optional and decoupled. It is a monitoring and
+control-intent surface, not a business logic executor.
+
 ## Production-Ready Target Architecture
 
 ```text

@@ -1,0 +1,2 @@
+channel_key,channel_name,account_name,youtube_token_path,voice_name,voice_speed,voice_pitch,language,default_categoryId,default_privacyStatus,title_template,description_template,tags_default,enabled,notes
+main,Main Channel,default,./secrets/youtube_token.pickle,vi-VN-Wavenet-A,1.0,0,vi-VN,22,private,{title},{title},"douyin,reup",TRUE,

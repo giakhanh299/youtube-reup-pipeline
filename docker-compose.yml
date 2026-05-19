@@ -13,3 +13,34 @@ services:
       - ./configs:/app/configs:ro
     command: ["python", "pipeline.py"]
     restart: "no"
+  scheduler:
+    build: .
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - ./runtime/logs:/app/runtime/logs
+      - ./runtime/state:/app/runtime/state
+      - ./runtime/temp:/app/runtime/temp
+      - ./configs:/app/configs:ro
+      - ./secrets:/app/secrets:ro
+    command: ["python", "scripts/scheduler_daemon.py"]
+    restart: unless-stopped
+  dashboard:
+    build: .
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      PYTHONUNBUFFERED: "1"
+      YT_DASHBOARD_HOST: "0.0.0.0"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./runtime/logs:/app/runtime/logs
+      - ./runtime/state:/app/runtime/state
+      - ./configs:/app/configs:ro
+    command: ["python", "scripts/dashboard.py"]
+    restart: unless-stopped

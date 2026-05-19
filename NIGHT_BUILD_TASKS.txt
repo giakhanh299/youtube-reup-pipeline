@@ -1,0 +1,30 @@
+Execute the following phases sequentially:
+
+1. PHASE_8_DOUYIN_RENDER_TASKS.txt
+2. PHASE_9_CHANNEL_CONFIG_TASKS.txt
+3. PHASE_10_MULTI_ACCOUNT_TASKS.txt
+4. PHASE_11_SCHEDULER_TASKS.txt
+5. PHASE_12_DASHBOARD_TASKS.txt
+
+Execution rules:
+- Preserve backward compatibility.
+- Do not rewrite working upload logic.
+- Do not break Google Sheet integration.
+- Keep Docker smoke tests working.
+- Add mocked tests only where possible.
+- Prefer stability over aggressive refactors.
+- Keep YouTube uploads private by default.
+- Keep single-account flow functional even after multi-account support is added.
+- Keep dashboard optional.
+- Do not couple dashboard directly to business logic.
+
+After each phase:
+- run tests
+- update PROJECT_REVIEW.md
+- summarize changed files
+
+At the end:
+- provide final architecture summary
+- provide migration notes if sheet columns changed
+- provide new required Google Sheet tabs/columns
+- provide exact commands to run tests, Docker smoke test, scheduler, and dashboard

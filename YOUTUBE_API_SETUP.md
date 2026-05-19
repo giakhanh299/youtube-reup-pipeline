@@ -76,6 +76,13 @@ prevent duplicate uploads. Failed rows are retried until
 `upload_retry_max_attempts`. Rows stuck in `uploading` can be recovered after
 `upload_recover_stale_after_seconds`.
 
+## Multi-Account Foundation
+
+`Channel Config.youtube_token_path` can point to a per-account OAuth token file.
+Rows with `channel_key` inherit `account_name` and `youtube_token_path` from the
+matching enabled channel config. The multi-account router keeps one uploader
+instance per account and rejects conflicting token paths for the same account.
+
 ## Tests
 
 Tests use mocked clients only. They must not run real YouTube uploads or require
