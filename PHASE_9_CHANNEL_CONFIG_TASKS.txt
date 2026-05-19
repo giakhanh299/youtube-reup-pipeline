@@ -1,0 +1,55 @@
+Implement Phase 9: Channel Config and multi-channel foundation.
+
+Context:
+The system already supports:
+- Google Sheet upload queue
+- YouTube API upload
+- render pipeline
+- Docker runtime
+
+I want a separate Google Sheet tab to manage multiple channels/accounts and per-channel settings.
+
+Create support for a second tab named:
+Channel Config
+
+Goals:
+1. Add channel configuration tab reader.
+2. Support per-channel settings.
+3. Link upload queue rows to channel config using channel_key.
+4. Keep backward compatibility if channel_key is missing.
+5. Prepare architecture for future multi-account support.
+6. Add mocked tests only.
+
+Channel Config columns:
+- channel_key
+- channel_name
+- account_name
+- youtube_token_path
+- voice_name
+- voice_speed
+- voice_pitch
+- language
+- default_categoryId
+- default_privacyStatus
+- title_template
+- description_template
+- tags_default
+- enabled
+- notes
+
+Upload Queue changes:
+- Add optional column channel_key.
+- If channel_key exists, load settings from Channel Config.
+- If missing, use existing defaults.
+
+Behavior:
+- Only use enabled rows from Channel Config.
+- Match queue row channel_key to Channel Config channel_key.
+- Apply default privacy/category/tags if upload row is missing them.
+- Keep upload private by default.
+
+Requirements:
+- Do not implement parallel uploads yet.
+- Do not implement scheduler yet.
+- Keep Docker smoke test working.
+- Update PROJECT_REVIEW.md.

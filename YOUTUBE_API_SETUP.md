@@ -55,6 +55,12 @@ Required columns:
 video_path,title,description,tags,categoryId,privacyStatus,upload_status,youtube_video_id,upload_error,upload_time
 ```
 
+Recommended Phase 7 recovery columns:
+
+```text
+retry_count,last_error,upload_started_at,upload_finished_at
+```
+
 Run the isolated uploader:
 
 ```text
@@ -64,6 +70,11 @@ python scripts/upload_from_sheet.py
 Rows with blank `upload_status` or `pending` are uploaded. The script writes
 `uploading`, then `uploaded` plus the YouTube video ID and upload timestamp. On
 failure it writes `failed` and a readable error message.
+
+Rows already marked `uploaded`, or rows with `youtube_video_id`, are skipped to
+prevent duplicate uploads. Failed rows are retried until
+`upload_retry_max_attempts`. Rows stuck in `uploading` can be recovered after
+`upload_recover_stale_after_seconds`.
 
 ## Tests
 

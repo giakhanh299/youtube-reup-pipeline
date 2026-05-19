@@ -1,0 +1,39 @@
+Implement Phase 10: multi-account upload workers.
+
+Goals:
+1. Support multiple YouTube accounts safely.
+2. Isolate upload workers by account.
+3. Prevent token conflicts and duplicate uploads.
+4. Support account-based upload routing.
+
+Tasks:
+
+1. Account Isolation
+- Separate token loading per worker.
+- Separate upload sessions per account.
+
+2. Queue Routing
+- Route uploads by account_name or channel_key.
+- Prevent conflicting uploads on same account.
+
+3. Worker System
+- Add configurable worker count.
+- Add worker assignment logging.
+
+4. Safety
+- Prevent duplicate uploads.
+- Prevent token overwrite.
+- Prevent race conditions.
+
+5. Recovery
+- Recover interrupted uploads safely.
+- Retry failed uploads by account.
+
+6. Tests
+- Add mocked multi-account tests only.
+
+Requirements:
+- Do not implement distributed cloud workers yet.
+- Keep backward compatibility.
+- Keep Docker smoke test working.
+- Update PROJECT_REVIEW.md.

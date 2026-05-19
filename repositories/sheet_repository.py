@@ -175,6 +175,10 @@ class SheetRepository:
         youtube_video_id: str = "",
         upload_error: str = "",
         upload_time: str = "",
+        retry_count: int | str | None = None,
+        last_error: str = "",
+        upload_started_at: str = "",
+        upload_finished_at: str = "",
     ) -> None:
         retry_google_api(
             lambda: self.sheet.update_upload_result(
@@ -184,6 +188,10 @@ class SheetRepository:
                 youtube_video_id=youtube_video_id,
                 upload_error=upload_error,
                 upload_time=upload_time,
+                retry_count=retry_count,
+                last_error=last_error,
+                upload_started_at=upload_started_at,
+                upload_finished_at=upload_finished_at,
             ),
             self.retry_strategy,
             "sheets_update_upload_result",

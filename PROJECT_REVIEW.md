@@ -320,6 +320,30 @@ Sheet upload flow:
 6. Write `uploading`, then `uploaded`, YouTube video ID, and UTC upload time.
 7. On failure, write `failed` and `upload_error`.
 
+### Phase 7 - Upload Stability And Recovery
+
+Phase 7 progress:
+
+- Prevent duplicate uploads by skipping rows already marked `uploaded` or rows
+  that already contain `youtube_video_id`.
+- Validate `video_path` exists before upload.
+- Validate upload file extensions using `upload_allowed_exts` or `video_exts`.
+- Added optional `retry_count`, `last_error`, `upload_started_at`, and
+  `upload_finished_at` sheet updates.
+- Added retry recovery for rows in `failed` while `retry_count` is below
+  `upload_retry_max_attempts`.
+- Added crash recovery for stale rows stuck in `uploading` after
+  `upload_recover_stale_after_seconds`.
+- Added best-effort upload timeout handling via `upload_timeout_seconds`.
+- Improved upload logging with start, finish, failure, row number, video path,
+  and retry count.
+- Added mocked tests for duplicate prevention, validation, retry recovery,
+  stale upload recovery, retry limits, and timeout failure handling.
+
+Phase 7 remains intentionally single-worker. It prevents common duplicate
+uploads and recovers interrupted rows, but it does not add distributed locks or
+multi-account scaling.
+
 ## Production-Ready Target Architecture
 
 ```text

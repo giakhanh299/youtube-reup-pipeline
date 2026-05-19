@@ -1,0 +1,51 @@
+Implement Phase 12: monitoring dashboard and management UI.
+
+Goals:
+1. Create lightweight dashboard UI.
+2. Visualize upload/render queue status.
+3. Monitor workers and accounts.
+4. Support manual retry and controls.
+
+Tasks:
+
+1. Dashboard
+Show:
+- pending jobs
+- rendering jobs
+- uploading jobs
+- failed jobs
+- completed jobs
+
+2. Worker Monitoring
+Show:
+- worker status
+- account usage
+- retry counts
+- throughput metrics
+
+3. Queue Controls
+Support:
+- retry failed job
+- skip job
+- pause queue
+- resume queue
+
+4. Logs
+View:
+- upload logs
+- render logs
+- worker logs
+- retry logs
+
+5. Architecture
+- Keep backend modular.
+- Keep dashboard optional.
+- Avoid coupling dashboard to business logic.
+
+6. Tests
+- Add lightweight tests where possible.
+
+Requirements:
+- Keep Docker runtime working.
+- Keep backward compatibility.
+- Update PROJECT_REVIEW.md.

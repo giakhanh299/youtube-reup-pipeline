@@ -1,0 +1,71 @@
+Implement Phase 8: Douyin processing and render pipeline.
+
+Context:
+The system already supports:
+- Google Sheet control plane
+- YouTube API v3 upload
+- queue architecture
+- Docker runtime
+- upload workers
+- Google Sheet upload integration
+
+Now implement the actual content processing pipeline for Douyin-style reupload automation.
+
+Goals:
+1. Process input videos from Douyin.
+2. Extract original audio from videos.
+3. Support replacing audio with TTS.
+4. Support ffmpeg render pipeline.
+5. Generate final rendered output videos.
+6. Save render results back to Google Sheet.
+7. Keep upload flow unchanged.
+8. Add mocked/unit tests where possible.
+
+Tasks:
+
+1. Input Video Processing
+- Validate source video exists.
+- Validate supported extensions.
+- Extract metadata where possible.
+
+2. Audio Extraction
+- Extract original audio using ffmpeg.
+- Save temporary audio files safely.
+
+3. TTS Integration
+Support:
+- voice_name
+- voice_speed
+- voice_pitch
+- language
+
+4. Render Pipeline
+- Combine video + generated audio.
+- Support subtitle burn-in later.
+- Generate rendered output video.
+
+5. Google Sheet Integration
+Add support for columns:
+- source_video_path
+- audio_path
+- rendered_video_path
+- render_status
+- render_error
+- voice_name
+- voice_speed
+- voice_pitch
+
+6. Workflow Rules
+- Do not upload unless render_status is ready.
+- Preserve current upload flow.
+- Preserve backward compatibility.
+
+7. Tests
+- Add mocked tests only.
+- Do not perform heavy real renders in tests.
+
+Requirements:
+- Keep Docker smoke test working.
+- Update PROJECT_REVIEW.md.
+- Do not implement scheduler yet.
+- Do not implement scaling workers yet.

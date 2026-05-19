@@ -1,0 +1,40 @@
+Implement Phase 11: scheduler and automation daemon.
+
+Goals:
+1. Run the pipeline continuously.
+2. Support scheduled processing/upload cycles.
+3. Support crash-safe daemon recovery.
+4. Add runtime monitoring.
+
+Tasks:
+
+1. Scheduler
+- Add configurable processing intervals.
+- Add upload intervals.
+- Add retry intervals.
+
+2. Daemon Mode
+- Continuous loop execution.
+- Graceful shutdown handling.
+- Safe restart behavior.
+
+3. Runtime Monitoring
+- Worker heartbeat logging.
+- Queue statistics logging.
+- Upload throughput metrics.
+
+4. Recovery
+- Resume unfinished jobs on restart.
+- Prevent duplicate processing after crash.
+
+5. Docker
+- Add daemon Docker runtime support.
+
+6. Tests
+- Add mocked scheduler tests only.
+
+Requirements:
+- Do not implement dashboard yet.
+- Keep backward compatibility.
+- Keep Docker smoke test working.
+- Update PROJECT_REVIEW.md.

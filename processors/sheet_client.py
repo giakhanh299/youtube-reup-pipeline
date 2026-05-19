@@ -131,6 +131,10 @@ class SheetConfig:
         youtube_video_id: str = "",
         upload_error: str = "",
         upload_time: str = "",
+        retry_count: int | str | None = None,
+        last_error: str = "",
+        upload_started_at: str = "",
+        upload_finished_at: str = "",
     ) -> None:
         if self._sh is None:
             self.connect()
@@ -143,7 +147,12 @@ class SheetConfig:
             "youtube_video_id": youtube_video_id,
             "upload_error": upload_error[:1000],
             "upload_time": upload_time,
+            "last_error": last_error[:1000],
+            "upload_started_at": upload_started_at,
+            "upload_finished_at": upload_finished_at,
         }
+        if retry_count is not None:
+            values_by_column["retry_count"] = retry_count
         for header, value in values_by_column.items():
             if header in headers:
                 col = headers.index(header) + 1

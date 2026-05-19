@@ -10,3 +10,7 @@ Column G: upload_status
 Column H: youtube_video_id
 Column I: upload_error
 Column J: upload_time
+Column K: retry_count
+Column L: last_error
+Column M: upload_started_at
+Column N: upload_finished_at

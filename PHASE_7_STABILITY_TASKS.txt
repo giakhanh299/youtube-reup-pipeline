@@ -1,0 +1,21 @@
+Implement Phase 7: stability and recovery improvements.
+
+Goals:
+1. Prevent duplicate uploads.
+2. Add upload retry recovery.
+3. Resume interrupted upload jobs safely.
+4. Improve upload logging.
+5. Add upload timeout handling.
+6. Add validation before upload.
+7. Keep backward compatibility.
+
+Requirements:
+- Skip rows already marked uploaded.
+- Validate file exists before upload.
+- Validate file extension before upload.
+- Add retry_count support.
+- Add last_error support.
+- Add upload_started_at and upload_finished_at.
+- Add crash-safe recovery behavior.
+- Keep tests mocked only.
+- Do not implement scaling yet.

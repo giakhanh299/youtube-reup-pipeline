@@ -43,5 +43,13 @@
 
   "upload_status_done": "uploaded",
 
-  "upload_status_error": "failed"
+  "upload_status_error": "failed",
+
+  "upload_retry_max_attempts": 3,
+
+  "upload_recover_stale_after_seconds": 3600,
+
+  "upload_timeout_seconds": 3600,
+
+  "upload_allowed_exts": [".mp4", ".mkv", ".avi", ".mov"]
 }
