@@ -1,0 +1,15 @@
+Run python scripts/export_sheet_snapshot.py first.
+
+Then read:
+- runtime/sheet_snapshot.json
+- runtime/sheet_snapshot.csv
+
+Use the snapshot to debug and fix the current issue.
+
+Rules:
+- Do not expose secrets.
+- Do not print credentials.
+- Do not modify the online Google Sheet unless required by existing project behavior.
+- Reuse existing Google Sheets auth/config in this repository.
+- Run relevant tests after changes.
+- Report changed files and test results.

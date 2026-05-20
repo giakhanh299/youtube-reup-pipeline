@@ -1,0 +1,42 @@
+Create scripts/export_sheet_snapshot.py
+
+Requirements:
+
+- Read Google Sheet config from configs/settings.json.
+- Reuse the existing Google Sheets authentication already used in this repository.
+- Check files like:
+  - processors/sheet_client.py
+  - repositories/sheet_repository.py
+  - configs/settings.json
+  - any credential/auth helper
+
+The script must:
+
+1. Read the configured Google Spreadsheet.
+2. Export data to:
+   - runtime/sheet_snapshot.json
+   - runtime/sheet_snapshot.csv
+3. Create runtime/ automatically if missing.
+4. Use row 1 as headers.
+5. Save JSON rows as array of objects.
+6. UTF-8 encoding.
+7. Never expose secrets or credentials.
+8. Never modify the Google Sheet.
+9. Print clean success logs only.
+10. Add clear error handling for:
+   - missing config
+   - missing spreadsheet id
+   - missing sheet name
+   - auth failure
+   - API failure
+
+Expected command:
+
+python scripts/export_sheet_snapshot.py
+
+Expected result:
+
+runtime/sheet_snapshot.json
+runtime/sheet_snapshot.csv
+
+This snapshot is only for local Codex debugging and analysis.
