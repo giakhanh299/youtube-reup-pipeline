@@ -234,6 +234,8 @@ DROPDOWN_VALUES = {
     "metadata_ai_enabled": ["TRUE", "FALSE"],
 }
 
+ONE_OF_LIST_CONDITION = ValidationConditionType.one_of_list if ValidationConditionType is not None else "ONE_OF_LIST"
+
 
 def _required_text(settings: dict, key: str) -> str:
     value = str(settings.get(key, "")).strip()
@@ -261,6 +263,10 @@ def _merge_headers(existing: list[str], required: list[str]) -> list[str]:
         if header not in merged:
             merged.append(header)
     return merged
+
+
+def _header_key(value: Any) -> str:
+    return str(value).strip().lower()
 
 
 def _update_row(worksheet: Any, row_number: int, values: list[str]) -> None:
@@ -298,18 +304,20 @@ def ensure_headers_and_sample_row(worksheet: Any, schema: WorksheetSchema) -> li
 def apply_dropdowns(worksheet: Any, headers: list[str]) -> int:
     applied = 0
     add_validation = getattr(worksheet, "add_validation", None)
-    if not callable(add_validation) or ValidationConditionType is None:
+    if not callable(add_validation):
         return applied
+    header_positions = {_header_key(header): index for index, header in enumerate(headers) if _header_key(header)}
     for header, values in DROPDOWN_VALUES.items():
-        if header not in headers:
+        header_index = header_positions.get(_header_key(header))
+        if header_index is None:
             continue
-        col = _column_letter(headers.index(header) + 1)
+        col = _column_letter(header_index + 1)
         cell_range = f"{col}2:{col}1000"
         try:
-            add_validation(cell_range, ValidationConditionType.one_of_list, values, strict=True, showCustomUi=True)
+            add_validation(cell_range, ONE_OF_LIST_CONDITION, values, strict=True, showCustomUi=True)
             applied += 1
         except TypeError:
-            add_validation(cell_range, ValidationConditionType.one_of_list, values)
+            add_validation(cell_range, ONE_OF_LIST_CONDITION, values)
             applied += 1
     return applied
 

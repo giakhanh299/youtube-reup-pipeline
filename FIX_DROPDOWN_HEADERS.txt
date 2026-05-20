@@ -1,0 +1,21 @@
+Fix failing test:
+tests/test_setup_google_sheet_schema.py::SetupGoogleSheetSchemaTests::test_apply_dropdowns_for_matching_headers
+
+Failure:
+AssertionError: 0 != 3
+
+Meaning:
+apply dropdown function is not matching headers, returned count 0 but expected 3.
+
+Tasks:
+1. Open tests/test_setup_google_sheet_schema.py and inspect expected headers in test_apply_dropdowns_for_matching_headers.
+2. Open scripts/setup_google_sheet_schema.py.
+3. Fix dropdown header matching so it matches existing sheet headers exactly and robustly.
+4. Matching should be case-insensitive and trim whitespace.
+5. Do not require all configured headers to exist; apply dropdown only to matching headers.
+6. Return the number of dropdowns applied.
+7. Keep Google Sheet schema compatible with local OmniVoice columns.
+8. Run only:
+   python -m py_compile scripts/setup_google_sheet_schema.py tests/test_setup_google_sheet_schema.py
+   python -m unittest tests.test_setup_google_sheet_schema -v
+Do not run full test suite.
