@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any, Callable
+import shutil
+import time
 
 
 class OmniVoiceServiceError(RuntimeError):
@@ -39,7 +41,6 @@ class OmniVoiceService:
 
         try:
             import torch
-
             return "cuda" if torch.cuda.is_available() else "cpu"
         except Exception:
             return "cpu"
@@ -53,7 +54,6 @@ class OmniVoiceService:
                 model = self.model_loader(self.model_name)
             else:
                 from omnivoice import OmniVoice
-
                 model = OmniVoice.from_pretrained(self.model_name)
         except Exception as exc:
             raise OmniVoiceServiceError(
@@ -74,33 +74,33 @@ class OmniVoiceService:
         return model
 
     def synthesize(self, text: str, output_file: Path, voice_cfg: dict) -> None:
+        output_file = Path(output_file)
+        output_file.parent.mkdir(parents=True, exist_ok=True)
+
         ref_audio_path = Path(str(voice_cfg.get("ref_audio_path", "")).strip())
 
         if not ref_audio_path.exists():
-            raise FileNotFoundError(
-                f"OmniVoice ref_audio_path not found: {ref_audio_path}"
-            )
+            raise FileNotFoundError(f"OmniVoice ref_audio_path not found: {ref_audio_path}")
 
         ref_text = str(voice_cfg.get("ref_text", "")).strip()
 
         if not ref_text:
             raise ValueError("OmniVoice ref_text is required")
 
-        output_file.parent.mkdir(parents=True, exist_ok=True)
         model = self._load_model()
+        started_at = time.time()
 
         kwargs = {
             "text": text,
             "ref_audio_path": str(ref_audio_path),
             "ref_text": ref_text,
             "language": voice_cfg.get("language") or voice_cfg.get("language_code", "vi"),
-            "speed": _to_float(
-                voice_cfg.get("speed", voice_cfg.get("speaking_rate")),
-                1.0,
-            ),
+            "speed": _to_float(voice_cfg.get("speed", voice_cfg.get("speaking_rate")), 1.0),
             "pitch": _to_float(voice_cfg.get("pitch"), 0.0),
             "output_path": str(output_file),
         }
+
+        errors: list[str] = []
 
         for method_name in ("synthesize", "generate", "infer", "tts"):
             method = getattr(model, method_name, None)
@@ -109,26 +109,43 @@ class OmniVoiceService:
                 continue
 
             try:
+                print(f"[OmniVoice] Trying method: {method_name}")
                 result = method(**kwargs)
-            except TypeError:
-                result = method(
-                    text,
-                    ref_audio_path=str(ref_audio_path),
-                    ref_text=ref_text,
-                    output_path=str(output_file),
-                )
+            except TypeError as exc1:
+                try:
+                    result = method(
+                        text,
+                        ref_audio_path=str(ref_audio_path),
+                        ref_text=ref_text,
+                        output_path=str(output_file),
+                    )
+                except Exception as exc2:
+                    errors.append(f"{method_name}: {type(exc2).__name__}: {exc2}")
+                    continue
+            except Exception as exc:
+                errors.append(f"{method_name}: {type(exc).__name__}: {exc}")
+                continue
 
+            print(f"[OmniVoice] Result type from {method_name}: {type(result)}")
             self._persist_result(result, output_file)
 
-            if output_file.exists():
+            if output_file.exists() and output_file.stat().st_size > 0:
                 return
 
-            raise OmniVoiceServiceError(
-                "OmniVoice generation finished but did not create the output file"
-            )
+            newest_wav = self._find_newest_wav(output_file.parent, started_at)
+
+            if newest_wav and newest_wav.exists():
+                shutil.copy2(newest_wav, output_file)
+                if output_file.exists() and output_file.stat().st_size > 0:
+                    print(f"[OmniVoice] Copied generated wav from: {newest_wav}")
+                    return
+
+            errors.append(f"{method_name}: finished but no output file created")
 
         raise OmniVoiceServiceError(
-            "Loaded OmniVoice model does not expose synthesize/generate/infer/tts"
+            "OmniVoice generation failed or did not create output file.\n"
+            f"Expected output: {output_file}\n"
+            f"Tried errors: {errors}"
         )
 
     def _persist_result(self, result: Any, output_file: Path) -> None:
@@ -143,11 +160,65 @@ class OmniVoiceService:
             source = Path(result)
 
             if source.exists() and source != output_file:
-                output_file.write_bytes(source.read_bytes())
+                shutil.copy2(source, output_file)
 
             return
+
+        if isinstance(result, dict):
+            for key in ("audio", "audio_path", "path", "output", "output_path", "wav"):
+                value = result.get(key)
+
+                if value is not None:
+                    self._persist_result(value, output_file)
+                    if output_file.exists():
+                        return
+
+        if isinstance(result, (list, tuple)):
+            for item in result:
+                self._persist_result(item, output_file)
+                if output_file.exists():
+                    return
 
         save_method = getattr(result, "save", None)
 
         if callable(save_method):
             save_method(str(output_file))
+            return
+
+        write_method = getattr(result, "write", None)
+
+        if callable(write_method):
+            write_method(str(output_file))
+            return
+
+    def _find_newest_wav(self, folder: Path, started_at: float) -> Path | None:
+        candidates: list[Path] = []
+
+        search_roots = [
+            folder,
+            Path.cwd(),
+            Path("runtime"),
+            Path("outputs"),
+            Path("output"),
+            Path("temp"),
+            Path("tmp"),
+        ]
+
+        for root in search_roots:
+            if not root.exists():
+                continue
+
+            try:
+                for wav in root.rglob("*.wav"):
+                    try:
+                        if wav.stat().st_mtime >= started_at:
+                            candidates.append(wav)
+                    except OSError:
+                        pass
+            except OSError:
+                pass
+
+        if not candidates:
+            return None
+
+        return max(candidates, key=lambda p: p.stat().st_mtime)
