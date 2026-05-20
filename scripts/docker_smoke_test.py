@@ -21,6 +21,7 @@ REQUIRED_MODULES = [
     "services.tts_service",
     "services.render_service",
     "services.omnivoice_service",
+    "services.metadata_service",
     "services.scheduler_service",
     "services.dashboard_service",
     "processors.folder_processor",
@@ -39,6 +40,7 @@ REQUIRED_MODULES = [
     "scripts.setup_google_sheet_schema",
     "scripts.test_render_engine",
     "scripts.test_omnivoice_tts",
+    "scripts.generate_video_metadata",
 ]
 
 

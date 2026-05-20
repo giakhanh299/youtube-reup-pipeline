@@ -63,6 +63,12 @@ class SheetRepository:
             "logo_y": row.get("logo_y", 40),
             "music_path": self.resolve_path(row.get("music_path", "")),
             "music_volume": to_float(row.get("music_volume"), 0.07),
+            "channel_description": row.get("channel_description", ""),
+            "channel_style_prompt": row.get("channel_style_prompt", ""),
+            "title_template": row.get("title_template", ""),
+            "description_template": row.get("description_template", ""),
+            "tags_default": row.get("tags_default", ""),
+            "metadata_ai_enabled": to_bool(row.get("metadata_ai_enabled"), False),
             "raw": row,
         }
 
@@ -270,4 +276,18 @@ class SheetRepository:
             ),
             self.retry_strategy,
             "sheets_update_render_result",
+        )
+
+    def update_video_queue_fields_by_job_id(self, job_id: str, fields: dict[str, Any]) -> None:
+        retry_google_api(
+            lambda: self.sheet.update_video_queue_fields_by_job_id(job_id, fields),
+            self.retry_strategy,
+            "sheets_update_video_queue_metadata",
+        )
+
+    def upsert_uploaded_video(self, ledger_row: dict[str, Any]) -> str:
+        return retry_google_api(
+            lambda: self.sheet.upsert_uploaded_video(ledger_row),
+            self.retry_strategy,
+            "sheets_upsert_uploaded_video",
         )

@@ -591,6 +591,26 @@ omnivoice_dtype
 VOICE_CONFIG supports `tts_engine`, `ref_audio_path`, `ref_text`, `language`,
 `speed`, and `pitch`. Tests mock the model loader and do not download models.
 
+### Uploaded Ledger And AI Metadata
+
+Added `services/metadata_service.py` and `scripts/generate_video_metadata.py`.
+The metadata service produces Vietnamese YouTube metadata from source title,
+translated title, source URL, channel profile, channel style prompt, templates,
+and optional summary text. If `OPENAI_API_KEY` exists it uses an OpenAI-backed
+generator; otherwise it falls back to deterministic templates.
+
+Added `UPLOADED_VIDEOS` ledger support. Successful uploads can upsert one ledger
+row by `job_id` or `youtube_video_id`, preventing duplicate history rows while
+leaving `VIDEO_QUEUE` as the active queue. The upload worker can receive an
+optional ledger repository and writes `youtube_url` as:
+
+```text
+https://www.youtube.com/watch?v={youtube_video_id}
+```
+
+Schema setup now creates `UPLOADED_VIDEOS`, adds metadata columns to
+`CHANNEL_CONFIG` and `VIDEO_QUEUE`, and applies a dropdown for `ledger_status`.
+
 ## Production-Ready Target Architecture
 
 ```text

@@ -1,2 +1,2 @@
-job_id,status,channel_id,video_path,text_path,output_path,error,title,description,tags,categoryId,privacyStatus
-job_001,NEW,kenh_1,G:/My Drive/Video Doujin/VIDEO IN PUT GIAKHANH CHANEL/DA_XU_LY/abc.mp4,G:/My Drive/Video Doujin/VIDEO IN PUT GIAKHANH CHANEL/DA_XU_LY/abc_vi.srt,,,Sample title,Sample description,"tag1,tag2",22,private
+job_id,status,channel_id,video_path,text_path,output_path,error,title,description,tags,categoryId,privacyStatus,channel_key,upload_status,youtube_video_id,upload_error,upload_time,retry_count,last_error,upload_started_at,upload_finished_at,original_title,translated_title,final_title,final_description,source_url,source_video_id,source_channel_id
+job_001,NEW,kenh_1,G:/My Drive/Video Doujin/VIDEO IN PUT GIAKHANH CHANEL/DA_XU_LY/abc.mp4,G:/My Drive/Video Doujin/VIDEO IN PUT GIAKHANH CHANEL/DA_XU_LY/abc_vi.srt,,,Sample title,Sample description,"tag1,tag2",22,private,,pending,,,,0,,,,Original title,,,,,,

@@ -202,6 +202,59 @@ class SheetConfig:
         if updates:
             ws.batch_update(updates)
 
+    def update_video_queue_fields_by_job_id(self, job_id: str, fields: dict[str, Any]) -> None:
+        if self._sh is None:
+            self.connect()
+        import gspread
+        ws = self._sh.worksheet("VIDEO_QUEUE")
+        headers = ws.row_values(1)
+        id_col = headers.index("job_id") + 1
+        cell = ws.find(job_id, in_column=id_col)
+        if not cell:
+            return
+        updates = []
+        for header, value in fields.items():
+            if header in headers:
+                col = headers.index(header) + 1
+                updates.append({"range": gspread.utils.rowcol_to_a1(cell.row, col), "values": [[value]]})
+        if updates:
+            ws.batch_update(updates)
+
+    def upsert_uploaded_video(self, ledger_row: dict[str, Any]) -> str:
+        if self._sh is None:
+            self.connect()
+        ws = self._sh.worksheet("UPLOADED_VIDEOS")
+        headers = ws.row_values(1)
+        job_id = str(ledger_row.get("job_id", "")).strip()
+        youtube_video_id = str(ledger_row.get("youtube_video_id", "")).strip()
+        target_row = None
+        if job_id and "job_id" in headers:
+            found = ws.find(job_id, in_column=headers.index("job_id") + 1)
+            if found:
+                target_row = found.row
+        if target_row is None and youtube_video_id and "youtube_video_id" in headers:
+            found = ws.find(youtube_video_id, in_column=headers.index("youtube_video_id") + 1)
+            if found:
+                target_row = found.row
+        values = [ledger_row.get(header, "") for header in headers]
+        if target_row:
+            range_name = f"A{target_row}:{_column_letter(len(headers))}{target_row}"
+            try:
+                ws.update(values=[values], range_name=range_name)
+            except TypeError:
+                ws.update(range_name, [values])
+            return "updated"
+        ws.append_row(values, value_input_option="USER_ENTERED")
+        return "appended"
+
+
+def _column_letter(index: int) -> str:
+    letters = ""
+    while index:
+        index, remainder = divmod(index - 1, 26)
+        letters = chr(65 + remainder) + letters
+    return letters or "A"
+
 
 def load_csv_rows(path: str | Path) -> list[dict]:
     path = Path(path)

@@ -1,0 +1,127 @@
+Add multi-channel uploaded video ledger and AI title/description generation.
+
+Requirements:
+
+1. Add Google Sheet tab:
+UPLOADED_VIDEOS
+
+This tab is a global ledger for all channels.
+
+Headers:
+- uploaded_id
+- job_id
+- channel_id
+- channel_name
+- account_name
+- source_channel_id
+- source_url
+- source_video_id
+- original_title
+- translated_title
+- final_title
+- final_description
+- tags
+- categoryId
+- privacyStatus
+- youtube_video_id
+- youtube_url
+- upload_time
+- video_path
+- rendered_video_path
+- voice_id
+- render_preset_id
+- upload_status
+- ledger_status
+- notes
+
+2. When upload succeeds:
+- append/update one row in UPLOADED_VIDEOS
+- prevent duplicates by job_id and youtube_video_id
+- keep VIDEO_QUEUE as active queue only
+- UPLOADED_VIDEOS stores history across all channels
+
+3. Add AI metadata service:
+services/metadata_service.py
+
+Inputs:
+- original_title
+- translated_title if exists
+- source_url
+- channel_id
+- channel_name
+- channel_description from CHANNEL_CONFIG
+- channel_style_prompt from CHANNEL_CONFIG
+- video summary/text if available
+
+Outputs:
+- final_title
+- final_description
+- tags
+
+4. Add CHANNEL_CONFIG columns:
+- channel_description
+- channel_style_prompt
+- title_template
+- description_template
+- tags_default
+- metadata_ai_enabled
+
+5. Metadata rules:
+- If final_title already exists, do not overwrite unless force flag is true.
+- If final_description already exists, do not overwrite unless force flag is true.
+- Use Vietnamese output.
+- Keep title natural, clickable, not spammy.
+- Use channel_description and channel_style_prompt to adapt style.
+- If OPENAI_API_KEY exists, use OpenAI API.
+- If no OPENAI_API_KEY, fallback to template-based metadata.
+
+6. Add script:
+scripts/generate_video_metadata.py
+
+The script should:
+- read VIDEO_QUEUE rows missing final_title/final_description/tags
+- generate metadata
+- write back to VIDEO_QUEUE
+- support --force
+- support --limit N
+- support --dry-run
+
+Example:
+python scripts/generate_video_metadata.py --limit 10
+python scripts/generate_video_metadata.py --limit 10 --dry-run
+python scripts/generate_video_metadata.py --force --limit 10
+
+7. Update scripts/setup_google_sheet_schema.py:
+- create UPLOADED_VIDEOS
+- add headers
+- add dropdown for ledger_status:
+  active, private, public, deleted, error, duplicate
+- add new CHANNEL_CONFIG metadata columns
+- add VIDEO_QUEUE metadata columns:
+  original_title
+  translated_title
+  final_title
+  final_description
+  tags
+  source_url
+  source_video_id
+  source_channel_id
+
+8. Integrate with upload worker:
+- after successful YouTube upload, call ledger append/update
+- include youtube_url = https://www.youtube.com/watch?v={youtube_video_id}
+
+9. Add tests with mocks only:
+- metadata fallback generation
+- OpenAI mocked generation
+- ledger append/update no duplicate
+- schema creation includes UPLOADED_VIDEOS
+- upload worker writes ledger after success
+
+10. Update:
+README_SETUP.md
+PROJECT_REVIEW.md
+
+11. Verification:
+- python -m unittest discover -s tests -p "test_*.py"
+- python -m py_compile services/metadata_service.py scripts/generate_video_metadata.py scripts/setup_google_sheet_schema.py

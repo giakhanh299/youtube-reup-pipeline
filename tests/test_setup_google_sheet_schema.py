@@ -61,6 +61,7 @@ class SetupGoogleSheetSchemaTests(unittest.TestCase):
 
         self.assertEqual({name for name, _rows, _cols in spreadsheet.created}, {schema.name for schema in SCHEMAS})
         self.assertIn("VIDEO_QUEUE", results)
+        self.assertIn("UPLOADED_VIDEOS", results)
 
     def test_ensure_headers_appends_missing_headers_without_deleting_existing_data(self) -> None:
         schema = next(item for item in SCHEMAS if item.name == "RENDER_PRESET")
@@ -83,11 +84,12 @@ class SetupGoogleSheetSchemaTests(unittest.TestCase):
     def test_apply_dropdowns_for_matching_headers(self) -> None:
         worksheet = FakeWorksheet("VIDEO_QUEUE")
 
-        count = apply_dropdowns(worksheet, ["status", "privacyStatus", "not_dropdown"])
+        count = apply_dropdowns(worksheet, ["status", "privacyStatus", "ledger_status", "not_dropdown"])
 
-        self.assertEqual(count, 2)
+        self.assertEqual(count, 3)
         self.assertEqual(worksheet.validations[0][0], "A2:A1000")
         self.assertEqual(worksheet.validations[1][0], "B2:B1000")
+        self.assertEqual(worksheet.validations[2][0], "C2:C1000")
 
 
 if __name__ == "__main__":

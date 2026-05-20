@@ -66,3 +66,20 @@ python scripts\test_omnivoice_tts.py --text "Xin chao day la giong clone test" -
 ```
 
 The OmniVoice package/model is loaded lazily only when this engine is used.
+
+## Metadata And Uploaded Ledger
+
+Generate missing VIDEO_QUEUE metadata:
+
+```powershell
+python scripts\generate_video_metadata.py --limit 10
+python scripts\generate_video_metadata.py --limit 10 --dry-run
+python scripts\generate_video_metadata.py --force --limit 10
+```
+
+If `OPENAI_API_KEY` is set, metadata generation uses OpenAI. Otherwise it falls
+back to templates from `CHANNEL_CONFIG`.
+
+Successful uploads can be written to the global `UPLOADED_VIDEOS` ledger. The
+ledger stores history across all channels while `VIDEO_QUEUE` remains the active
+queue.
