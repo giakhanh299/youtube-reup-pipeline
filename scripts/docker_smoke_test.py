@@ -34,6 +34,8 @@ REQUIRED_MODULES = [
     "scripts.scheduler_daemon",
     "scripts.dashboard",
     "scripts.export_sheet_snapshot",
+    "scripts.setup_google_sheet_schema",
+    "scripts.test_render_engine",
 ]
 
 

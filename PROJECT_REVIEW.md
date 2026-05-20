@@ -522,6 +522,39 @@ The exporter is read-only, uses row 1 as headers, creates `runtime/` when
 needed, writes UTF-8 files, and avoids printing credentials or secrets. Mocked
 tests cover header parsing, sheet-name fallback, validation, and output writing.
 
+### Google Sheet Schema Setup
+
+Added `scripts/setup_google_sheet_schema.py` and `README_SETUP.md`.
+
+The setup script creates or repairs these Google Sheet tabs:
+
+```text
+CHANNEL_CONFIG
+VOICE_CONFIG
+MUSIC_PACK
+OVERLAY_PACK
+RENDER_PRESET
+VIDEO_QUEUE
+```
+
+It appends missing headers, adds default sample rows only to empty sheets, and
+applies dropdown validation for status, upload status, privacy, channel, voice,
+music, overlay, render preset, and render controls. It is idempotent and does
+not delete existing data.
+
+### Render Engine Upgrade
+
+Upgraded `services/render_service.py` with a testable FFmpeg command builder for
+Shorts/TikTok-style rendering. Supported fit modes are `contain`, `cover`,
+`crop`, and `blur_bg`; output sizes can be 1080x1920, 1920x1080, or 1:1 via
+explicit width/height or `aspect_ratio`. The engine now supports scale, crop,
+pad, gaussian blur, background music mix, original audio volume, TTS audio
+volume, subtitle burn-in, and logo overlays while preserving the old
+`processors.render_engine.render_video()` entrypoint.
+
+Added `scripts/test_render_engine.py` to print or run a preview FFmpeg command
+and mocked command-builder tests for all major render modes.
+
 ## Production-Ready Target Architecture
 
 ```text
