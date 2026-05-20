@@ -1,0 +1,133 @@
+TASK: Remove Google TTS path and make OmniVoice local the main voice engine.
+
+Project goal:
+- This project will NOT use Google TTS anymore.
+- Use local OmniVoice only.
+- The main local test script is scripts/test_omnivoice_local.py.
+- Keep the pipeline compatible with Google Sheet control.
+- Do not expose or commit secrets/tokens.
+
+Requirements:
+
+1. Remove or disable Google TTS usage
+- Find all Google TTS integrations in services/, processors/, pipeline.py, configs/, scripts/.
+- Remove Google Cloud Text-to-Speech as an active runtime dependency.
+- Do not require google_key_dir for voice generation anymore.
+- If old Google TTS code must remain for backward compatibility, isolate it clearly as deprecated and never call it by default.
+- Default voice engine must be omnivoice_local.
+
+2. Make OmniVoice local the primary voice path
+- Use scripts/test_omnivoice_local.py as the reference implementation.
+- Ensure OmniVoice loads with:
+  OmniVoice.from_pretrained("k2-fsa/OmniVoice", local_files_only=True)
+- Ensure CUDA is used when available.
+- Ensure output wav is written to requested output path.
+- Ensure relative paths are resolved from project ROOT.
+- Add clear logs:
+  Loading model
+  Using CUDA/CPU
+  Generating audio
+  Output path
+
+3. Create/clean service module
+- Implement a clean local OmniVoice service module, for example:
+  services/omnivoice_local_service.py
+- It should expose:
+  synthesize(text, ref_audio_path, ref_text, output_path, language="vi", speed=1.0, pitch=0.0)
+- It must not depend on TTSService or Google TTS.
+- It must save wav output correctly from OmniVoice generate() result.
+- It must support result types:
+  bytes
+  str/path
+  dict
+  list/tuple
+  numpy array
+  torch tensor
+
+4. Update pipeline usage
+- Replace calls that route voice generation through Google TTS or TTSService with OmniVoice local service.
+- Voice generation should read from Google Sheet row fields:
+  channel_id
+  text/script/title
+  ref_audio_path
+  ref_text
+  language
+  output_audio_path
+- If fields are missing, fail with a clear row-level error, not a crash.
+
+5. Adjust Google Sheet schema/docs
+Update or create a sheet schema doc, for example SHEET_COLUMNS.txt, with these voice columns:
+- channel_id
+- source_channel_url
+- source_video_url
+- source_video_id
+- title_original
+- title_vi
+- description_vi
+- script_text
+- ref_audio_path
+- ref_text
+- language
+- voice_status
+- voice_output_path
+- voice_error
+- upload_status
+- youtube_video_id
+
+Voice status values:
+- pending
+- processing
+- done
+- error
+
+6. Config changes
+- Update configs/settings.json or config docs:
+  voice_engine: "omnivoice_local"
+  omnivoice_model_name: "k2-fsa/OmniVoice"
+  omnivoice_local_files_only: true
+  omnivoice_default_language: "vi"
+  omnivoice_output_dir: "runtime/audio"
+- Remove Google TTS as required config.
+
+7. Scripts
+- Keep scripts/test_omnivoice_local.py.
+- Add arguments to it:
+  --text
+  --ref-audio
+  --ref-text
+  --output
+  --language
+  --speed
+  --pitch
+  --allow-download
+- Default must be local cache only.
+- If --allow-download is passed, allow downloading model.
+- Otherwise use local_files_only=True.
+
+8. Tests
+- Add or update tests for:
+  local path resolution
+  missing ref audio error
+  output path creation
+  saving wav from list/tuple result
+  Google TTS not required
+- Run:
+  python -m py_compile services/omnivoice_local_service.py scripts/test_omnivoice_local.py
+  python -m unittest discover -s tests -p "test_*.py"
+
+9. Git safety
+- Do not commit:
+  venv/
+  runtime/
+  secrets/
+  credentials/
+  .env
+  *.pickle
+  *.token
+  HF cache/model weights
+- Update .gitignore if needed.
+
+Deliverables:
+- Summary of changed files.
+- Exact test commands run.
+- Any remaining manual steps.

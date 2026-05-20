@@ -56,7 +56,12 @@ def local_command_tts(text: str, output_file: Path, voice_cfg: dict) -> None:
 
 
 def create_voice(text: str, output_file: Path, voice_cfg: dict, google_key_dir: str) -> None:
-    engine = voice_cfg.get('tts_engine') or voice_cfg.get('engine', 'google')
+    """Deprecated legacy TTS helper.
+
+    Google TTS is no longer the default runtime path. This helper remains only
+    for explicit legacy configs that still set engine/tts_engine to google.
+    """
+    engine = voice_cfg.get('tts_engine') or voice_cfg.get('engine', 'omnivoice_local')
     if engine == 'google':
         setup_google_credentials(google_key_dir)
         google_tts(text, output_file, voice_cfg)

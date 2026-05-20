@@ -79,7 +79,7 @@ class SetupGoogleSheetSchemaTests(unittest.TestCase):
 
         ensure_headers_and_sample_row(worksheet, schema)
 
-        self.assertEqual(worksheet.values[1][0], "voice_female_1")
+        self.assertEqual(worksheet.values[1][0], "voice_omnivoice_1")
 
     def test_apply_dropdowns_for_matching_headers(self) -> None:
         worksheet = FakeWorksheet("VIDEO_QUEUE")

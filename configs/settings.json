@@ -90,8 +90,11 @@
   "scheduler_lock_path": "runtime/state/scheduler.lock",
 
   "dashboard_host": "127.0.0.1",
-  "google_key_dir": "secrets",
+  "voice_engine": "omnivoice_local",
   "omnivoice_model_name": "k2-fsa/OmniVoice",
+  "omnivoice_local_files_only": true,
+  "omnivoice_default_language": "vi",
+  "omnivoice_output_dir": "runtime/audio",
   "omnivoice_device": "auto",
   "omnivoice_dtype": "auto",
   "dashboard_port": 8080

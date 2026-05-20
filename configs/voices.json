@@ -1,17 +1,19 @@
 {
-  "vi_female_google": {
+  "vi_omnivoice_local": {
+    "engine": "omnivoice_local",
+    "language": "vi",
+    "ref_audio_path": "",
+    "ref_text": "",
+    "speed": 1.0,
+    "pitch": 0.0
+  },
+  "_deprecated_vi_female_google": {
     "engine": "google",
     "language_code": "vi-VN",
     "name": "vi-VN-Wavenet-A",
     "gender": "FEMALE",
-    "speaking_rate": 1.0
-  },
-  "vi_male_google": {
-    "engine": "google",
-    "language_code": "vi-VN",
-    "name": "vi-VN-Wavenet-B",
-    "gender": "MALE",
-    "speaking_rate": 1.0
+    "speaking_rate": 1.0,
+    "deprecated": true
   },
   "local_placeholder": {
     "engine": "local_command",

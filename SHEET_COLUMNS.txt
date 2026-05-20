@@ -1,20 +1,48 @@
+Voice / upload queue columns
+
+channel_id
+source_channel_url
+source_video_url
+source_video_id
+title_original
+title_vi
+description_vi
+script_text
+ref_audio_path
+ref_text
+language
+voice_status
+voice_output_path
+voice_error
+upload_status
+youtube_video_id
+
+Voice status values
+
+pending
+processing
+done
+error
+
+Existing upload/render columns remain supported for backward compatibility.
+
 Sheet name: Video da edit
 
-Column A: video_path
-Column B: channel_key
-Column C: title
-Column D: description
-Column E: tags
-Column F: categoryId
-Column G: privacyStatus
-Column H: upload_status
-Column I: youtube_video_id
-Column J: upload_error
-Column K: upload_time
-Column L: retry_count
-Column M: last_error
-Column N: upload_started_at
-Column O: upload_finished_at
+video_path
+channel_key
+title
+description
+tags
+categoryId
+privacyStatus
+upload_status
+youtube_video_id
+upload_error
+upload_time
+retry_count
+last_error
+upload_started_at
+upload_finished_at
 
 Sheet name: Channel Config
 

@@ -28,12 +28,14 @@ class OmniVoiceService:
         model_name: str = "k2-fsa/OmniVoice",
         device: str = "auto",
         dtype: str = "auto",
+        local_files_only: bool = True,
         model_loader: Callable[[str], Any] | None = None,
         verbose: bool = False,
     ):
         self.model_name = model_name or "k2-fsa/OmniVoice"
         self.device = device or "auto"
         self.dtype = dtype or "auto"
+        self.local_files_only = local_files_only
         self.model_loader = model_loader
         self.verbose = verbose
         self._model: Any = None
@@ -86,7 +88,7 @@ class OmniVoiceService:
                     from OmniVoice import OmniVoice
 
                 self._log(f"Loading model: {self.model_name}")
-                model = OmniVoice.from_pretrained(self.model_name)
+                model = OmniVoice.from_pretrained(self.model_name, local_files_only=self.local_files_only)
         except Exception as exc:
             raise OmniVoiceServiceError(
                 "OmniVoice package/model is not available. "

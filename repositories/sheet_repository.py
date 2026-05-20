@@ -74,10 +74,10 @@ class SheetRepository:
 
     def normalize_voice(self, row: dict) -> dict:
         return {
-            "engine": row.get("engine", row.get("tts_engine", "google")),
-            "tts_engine": row.get("tts_engine", row.get("engine", "google")),
-            "language": row.get("language", row.get("language_code", "vi-VN")),
-            "language_code": row.get("language_code", row.get("language", "vi-VN")),
+            "engine": row.get("engine", row.get("tts_engine", "omnivoice_local")),
+            "tts_engine": row.get("tts_engine", row.get("engine", "omnivoice_local")),
+            "language": row.get("language", row.get("language_code", "vi")),
+            "language_code": row.get("language_code", row.get("language", "vi")),
             "name": row.get("name", "vi-VN-Wavenet-A"),
             "gender": row.get("gender", "FEMALE"),
             "speaking_rate": to_float(row.get("speaking_rate", row.get("speed")), 1.0),

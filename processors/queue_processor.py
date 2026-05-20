@@ -45,6 +45,7 @@ class QueueProcessor:
         for job in jobs:
             job_id = str(job.get("job_id", "")).strip()
             channel_id = str(job.get("channel_id", "")).strip()
+            voice_done = False
             try:
                 if not job_id:
                     raise ValueError("Missing job_id")
@@ -57,12 +58,20 @@ class QueueProcessor:
                     overlay_packs,
                     render_presets,
                 )
-                video = Path(str(job.get("video_path", "")).strip())
+                video = Path(self.sheet_repository.resolve_path(str(job.get("video_path", "")).strip()))
                 if not video.exists():
                     raise FileNotFoundError(f"video_path not found: {video}")
+                row_text = str(
+                    job.get("script_text")
+                    or job.get("tts_text")
+                    or job.get("text")
+                    or job.get("title_vi")
+                    or job.get("title")
+                    or ""
+                ).strip()
                 text_path_raw = str(job.get("text_path", "")).strip()
-                text_file = Path(text_path_raw) if text_path_raw else self.text_service.find_for_video(video, video.parent, priority)
-                if not text_file or not text_file.exists():
+                text_file = Path(self.sheet_repository.resolve_path(text_path_raw)) if text_path_raw else self.text_service.find_for_video(video, video.parent, priority)
+                if not row_text and (not text_file or not text_file.exists()):
                     raise FileNotFoundError(f"txt/srt not found for video: {video.name}")
                 self.queue_persistence.save_job_state(
                     QueueJobState(
@@ -76,7 +85,25 @@ class QueueProcessor:
                     job_id,
                     settings.get("queue_status_processing", "PROCESSING"),
                 )
-                output = self.job_processor.process_one_video(video, text_file, channel_id, channel_cfg, voices, settings)
+                self.sheet_repository.update_video_queue_fields_by_job_id(
+                    job_id,
+                    {"voice_status": "processing", "voice_error": ""},
+                )
+                output = self.job_processor.process_one_video(
+                    video,
+                    text_file,
+                    channel_id,
+                    channel_cfg,
+                    voices,
+                    settings,
+                    job_row=job,
+                )
+                voice_output = str(job.get("voice_output_path") or job.get("output_audio_path") or "").strip()
+                voice_fields = {"voice_status": "done", "voice_error": ""}
+                if voice_output:
+                    voice_fields["voice_output_path"] = voice_output
+                self.sheet_repository.update_video_queue_fields_by_job_id(job_id, voice_fields)
+                voice_done = True
                 self.sheet_repository.update_status_by_job_id(
                     job_id,
                     settings.get("queue_status_done", "READY_UPLOAD"),
@@ -103,6 +130,14 @@ class QueueProcessor:
                 traceback.print_exc()
                 if job_id:
                     self.queue_persistence.mark_failed(job_id, str(exc))
+                    if not voice_done:
+                        try:
+                            self.sheet_repository.update_video_queue_fields_by_job_id(
+                                job_id,
+                                {"voice_status": "error", "voice_error": str(exc)},
+                            )
+                        except Exception:
+                            pass
                     try:
                         self.sheet_repository.update_status_by_job_id(
                             job_id,

@@ -84,23 +84,39 @@ class DouyinRenderEngine:
         return audio_file
 
     def create_tts_audio(self, row: dict, settings: dict, temp_dir: Path) -> Path | None:
-        text = str(row.get("tts_text", row.get("text", ""))).strip()
+        text = str(
+            row.get("script_text")
+            or row.get("tts_text")
+            or row.get("text")
+            or row.get("title_vi")
+            or row.get("title")
+            or ""
+        ).strip()
         if not text:
             return None
         from services.tts_service import TTSService
 
         temp_dir.mkdir(parents=True, exist_ok=True)
-        audio_file = temp_dir / f"tts_{int(time.time())}.mp3"
+        output_audio_raw = str(row.get("output_audio_path") or row.get("voice_output_path") or "").strip()
+        audio_file = Path(self.resolve_path(output_audio_raw)) if output_audio_raw else temp_dir / f"tts_{int(time.time())}.wav"
         voice_cfg = {
-            "engine": row.get("voice_engine", "google"),
-            "language_code": row.get("language", "vi-VN"),
-            "name": row.get("voice_name", "vi-VN-Wavenet-A"),
-            "gender": row.get("voice_gender", "FEMALE"),
+            "engine": row.get("voice_engine") or row.get("tts_engine") or settings.get("voice_engine", "omnivoice_local"),
+            "language": row.get("language", settings.get("omnivoice_default_language", "vi")),
+            "ref_audio_path": self.resolve_path(row.get("ref_audio_path", "")),
+            "ref_text": row.get("ref_text", ""),
             "speaking_rate": to_float(row.get("voice_speed"), 1.0),
+            "speed": to_float(row.get("speed", row.get("voice_speed")), 1.0),
             "pitch": to_float(row.get("voice_pitch"), 0.0),
             "active": True,
         }
-        TTSService().create_voice(text, audio_file, voice_cfg, settings["google_key_dir"])
+        engine = str(voice_cfg["engine"]).strip().lower()
+        if engine in {"omnivoice", "omnivoice_local", "local_omnivoice"}:
+            missing = [name for name in ("ref_audio_path", "ref_text") if not str(voice_cfg.get(name, "")).strip()]
+            if missing:
+                channel_id = str(row.get("channel_id", "")).strip()
+                row_label = f" for channel_id={channel_id}" if channel_id else ""
+                raise ValueError(f"Missing OmniVoice field(s){row_label}: {', '.join(missing)}")
+        TTSService(settings=settings).create_voice(text, audio_file, voice_cfg, settings.get("google_key_dir", ""))
         return audio_file
 
     def render_video(self, source_video: Path, audio_path: Path, output_video: Path) -> None:
