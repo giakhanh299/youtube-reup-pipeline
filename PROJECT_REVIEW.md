@@ -572,6 +572,25 @@ Scheduler safety:
 - Worker statistics track processed, uploaded, failed, recovered, and skipped
   counts.
 
+### OmniVoice TTS Support
+
+Added `services/omnivoice_service.py` and `scripts/test_omnivoice_tts.py`.
+`TTSService` now routes `tts_engine=omnivoice` to a lazy OmniVoice adapter while
+keeping `google` and `local_command` behavior compatible. The adapter uses
+`OmniVoice.from_pretrained("k2-fsa/OmniVoice")`, selects CUDA when available
+unless configured otherwise, falls back to CPU, and writes WAV output.
+
+New config keys:
+
+```text
+omnivoice_model_name
+omnivoice_device
+omnivoice_dtype
+```
+
+VOICE_CONFIG supports `tts_engine`, `ref_audio_path`, `ref_text`, `language`,
+`speed`, and `pitch`. Tests mock the model loader and do not download models.
+
 ## Production-Ready Target Architecture
 
 ```text

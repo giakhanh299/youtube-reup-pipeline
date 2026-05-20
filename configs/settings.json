@@ -91,5 +91,8 @@
 
   "dashboard_host": "127.0.0.1",
   "google_key_dir": "secrets",
+  "omnivoice_model_name": "k2-fsa/OmniVoice",
+  "omnivoice_device": "auto",
+  "omnivoice_dtype": "auto",
   "dashboard_port": 8080
 }

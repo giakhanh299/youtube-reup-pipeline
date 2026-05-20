@@ -128,7 +128,7 @@ def main() -> None:
     _sheet, channels, voices, music_packs, overlay_packs, render_presets, queue = repository.load_all()
     job_processor = VideoJobProcessor(
         ROOT,
-        tts_service=TTSService(retry_strategy=retry_strategy, logger=logger),
+        tts_service=TTSService(retry_strategy=retry_strategy, logger=logger, settings=settings),
         render_service=RenderService(retry_strategy=retry_strategy, logger=logger),
         logger=logger,
     )

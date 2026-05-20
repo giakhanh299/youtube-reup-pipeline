@@ -56,7 +56,7 @@ def local_command_tts(text: str, output_file: Path, voice_cfg: dict) -> None:
 
 
 def create_voice(text: str, output_file: Path, voice_cfg: dict, google_key_dir: str) -> None:
-    engine = voice_cfg.get('engine', 'google')
+    engine = voice_cfg.get('tts_engine') or voice_cfg.get('engine', 'google')
     if engine == 'google':
         setup_google_credentials(google_key_dir)
         google_tts(text, output_file, voice_cfg)

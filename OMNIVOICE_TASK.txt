@@ -1,0 +1,46 @@
+Add OmniVoice voice clone support.
+
+Requirements:
+
+1. Add new TTS engine adapter:
+services/omnivoice_service.py
+
+2. Support VOICE_CONFIG:
+- tts_engine = omnivoice
+- ref_audio_path
+- ref_text
+- language
+- speed
+- pitch
+
+3. Integrate into existing services/tts_service.py:
+- if tts_engine == google -> current Google TTS
+- if tts_engine == omnivoice -> OmniVoice
+- keep backward compatibility
+
+4. OmniVoice generation:
+- use OmniVoice.from_pretrained("k2-fsa/OmniVoice")
+- support cuda if available
+- fallback to cpu if cuda is not available
+- output wav file
+- safe error message if model/package is missing
+
+5. Add config:
+- omnivoice_model_name
+- omnivoice_device
+- omnivoice_dtype
+
+6. Add tests with mocks only.
+Do not download model in tests.
+
+7. Add script:
+scripts/test_omnivoice_tts.py
+
+Example command:
+python scripts/test_omnivoice_tts.py --text "Xin chào đây là giọng clone test" --ref-audio runtime/test/Khanh2.wav --ref-text "Xin chào, đây là giọng đã được clone thử nghiệm." --output runtime/test/omnivoice_test.wav
+
+8. Update README_SETUP.md and PROJECT_REVIEW.md.
+
+9. Run:
+python -m unittest discover -s tests -p "test_*.py"
+python -m py_compile services/omnivoice_service.py services/tts_service.py scripts/test_omnivoice_tts.py

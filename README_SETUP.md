@@ -45,3 +45,24 @@ The scheduler loops `VIDEO_QUEUE`, renders `NEW` jobs, uploads `READY_UPLOAD`
 jobs, writes status updates back to Google Sheets, logs heartbeat/statistics to
 `runtime/logs/scheduler.log`, and uses a local lock file to avoid duplicate
 local scheduler instances.
+
+## OmniVoice TTS
+
+`VOICE_CONFIG` supports OmniVoice clone voices with:
+
+```text
+tts_engine=omnivoice
+ref_audio_path
+ref_text
+language
+speed
+pitch
+```
+
+Manual test command:
+
+```powershell
+python scripts\test_omnivoice_tts.py --text "Xin chao day la giong clone test" --ref-audio runtime/test/Khanh2.wav --ref-text "Xin chao, day la giong clone mau." --output runtime/test/omnivoice_test.wav
+```
+
+The OmniVoice package/model is loaded lazily only when this engine is used.

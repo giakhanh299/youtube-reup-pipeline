@@ -20,6 +20,7 @@ REQUIRED_MODULES = [
     "services.text_service",
     "services.tts_service",
     "services.render_service",
+    "services.omnivoice_service",
     "services.scheduler_service",
     "services.dashboard_service",
     "processors.folder_processor",
@@ -37,6 +38,7 @@ REQUIRED_MODULES = [
     "scripts.export_sheet_snapshot",
     "scripts.setup_google_sheet_schema",
     "scripts.test_render_engine",
+    "scripts.test_omnivoice_tts",
 ]
 
 
