@@ -1,12 +1,20 @@
-Fix scripts/setup_google_sheet_schema.py.
+Review the omnivoice-setup branch.
 
-Current error:
-condition_type param should be a valid ValidationConditionType
+Focus files:
+- scripts/test_omnivoice_tts.py
+- services/omnivoice_service.py
+- OmniVoice/
 
-Requirements:
-1. Use correct gspread validation API.
-2. Fix dropdown/data validation creation.
-3. Compatible with current gspread version.
-4. Keep existing functionality.
-5. Re-run tests.
-6. Print exact command to test script again.
+Problem:
+The script exits silently on Windows PowerShell with no traceback.
+
+Tasks:
+- add detailed logging
+- add startup diagnostics
+- add torch/cuda diagnostics
+- catch native crashes where possible
+- validate model loading
+- validate audio paths
+- improve Windows compatibility
+- fail loudly instead of silent exit
+- run validation and syntax checks

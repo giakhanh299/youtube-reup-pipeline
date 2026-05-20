@@ -57,6 +57,33 @@ class OmniVoiceServiceTests(unittest.TestCase):
         with self.assertRaisesRegex(FileNotFoundError, "ref_audio_path not found"):
             service.synthesize("text", Path("out.wav"), {"ref_audio_path": "missing.wav", "ref_text": "ref"})
 
+    def test_empty_reference_audio_fails_clearly(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            ref = Path(temp) / "ref.wav"
+            ref.write_bytes(b"")
+            service = OmniVoiceService(model_loader=lambda _name: FakeOmniVoiceModel())
+
+            with self.assertRaisesRegex(ValueError, "ref_audio_path is empty"):
+                service.synthesize("text", Path(temp) / "out.wav", {"ref_audio_path": str(ref), "ref_text": "ref"})
+
+    def test_model_without_generation_method_fails_clearly(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            ref = Path(temp) / "ref.wav"
+            ref.write_bytes(b"ref")
+            service = OmniVoiceService(model_loader=lambda _name: object())
+
+            with self.assertRaisesRegex(OmniVoiceServiceError, "no supported"):
+                service.synthesize("text", Path(temp) / "out.wav", {"ref_audio_path": str(ref), "ref_text": "ref"})
+
+    def test_diagnostics_include_device_information(self) -> None:
+        service = OmniVoiceService(device="cpu", dtype="float32")
+
+        diagnostics = service.diagnostics()
+
+        self.assertEqual(diagnostics["requested_device"], "cpu")
+        self.assertEqual(diagnostics["resolved_device"], "cpu")
+        self.assertEqual(diagnostics["dtype"], "float32")
+
     def test_missing_package_fails_clearly(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             ref = Path(temp) / "ref.wav"

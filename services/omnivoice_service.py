@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Callable
 import shutil
+import sys
 import time
 
 
@@ -28,12 +29,38 @@ class OmniVoiceService:
         device: str = "auto",
         dtype: str = "auto",
         model_loader: Callable[[str], Any] | None = None,
+        verbose: bool = False,
     ):
         self.model_name = model_name or "k2-fsa/OmniVoice"
         self.device = device or "auto"
         self.dtype = dtype or "auto"
         self.model_loader = model_loader
+        self.verbose = verbose
         self._model: Any = None
+
+    def _log(self, message: str) -> None:
+        if self.verbose:
+            print(f"[OmniVoice] {message}", flush=True)
+
+    def diagnostics(self) -> dict[str, Any]:
+        info: dict[str, Any] = {
+            "python": sys.version.replace("\n", " "),
+            "model_name": self.model_name,
+            "requested_device": self.device,
+            "resolved_device": self._resolve_device(),
+            "dtype": self.dtype,
+        }
+        try:
+            import torch
+
+            info["torch_version"] = getattr(torch, "__version__", "")
+            info["cuda_available"] = bool(torch.cuda.is_available())
+            info["cuda_device_count"] = int(torch.cuda.device_count()) if torch.cuda.is_available() else 0
+            if torch.cuda.is_available():
+                info["cuda_device_name"] = torch.cuda.get_device_name(0)
+        except Exception as exc:
+            info["torch_error"] = f"{type(exc).__name__}: {exc}"
+        return info
 
     def _resolve_device(self) -> str:
         if self.device != "auto":
@@ -53,7 +80,12 @@ class OmniVoiceService:
             if self.model_loader:
                 model = self.model_loader(self.model_name)
             else:
-                from omnivoice import OmniVoice
+                try:
+                    from omnivoice import OmniVoice
+                except Exception:
+                    from OmniVoice import OmniVoice
+
+                self._log(f"Loading model: {self.model_name}")
                 model = OmniVoice.from_pretrained(self.model_name)
         except Exception as exc:
             raise OmniVoiceServiceError(
@@ -62,6 +94,7 @@ class OmniVoiceService:
             ) from exc
 
         device = self._resolve_device()
+        self._log(f"Using device: {device}")
         to_method = getattr(model, "to", None)
 
         if callable(to_method):
@@ -71,6 +104,10 @@ class OmniVoiceService:
                 model = to_method(device=device)
 
         self._model = model
+        callable_methods = [name for name in ("synthesize", "generate", "infer", "tts") if callable(getattr(model, name, None))]
+        if not callable_methods:
+            raise OmniVoiceServiceError("Loaded OmniVoice model has no supported synthesize/generate/infer/tts method")
+        self._log(f"Available generation methods: {callable_methods}")
         return model
 
     def synthesize(self, text: str, output_file: Path, voice_cfg: dict) -> None:
@@ -81,6 +118,10 @@ class OmniVoiceService:
 
         if not ref_audio_path.exists():
             raise FileNotFoundError(f"OmniVoice ref_audio_path not found: {ref_audio_path}")
+        if not ref_audio_path.is_file():
+            raise ValueError(f"OmniVoice ref_audio_path is not a file: {ref_audio_path}")
+        if ref_audio_path.stat().st_size <= 0:
+            raise ValueError(f"OmniVoice ref_audio_path is empty: {ref_audio_path}")
 
         ref_text = str(voice_cfg.get("ref_text", "")).strip()
 
@@ -89,6 +130,8 @@ class OmniVoiceService:
 
         model = self._load_model()
         started_at = time.time()
+        self._log(f"Reference audio: {ref_audio_path}")
+        self._log(f"Output file: {output_file}")
 
         kwargs = {
             "text": text,
@@ -109,7 +152,7 @@ class OmniVoiceService:
                 continue
 
             try:
-                print(f"[OmniVoice] Trying method: {method_name}")
+                self._log(f"Trying method: {method_name}")
                 result = method(**kwargs)
             except TypeError as exc1:
                 try:
@@ -126,7 +169,7 @@ class OmniVoiceService:
                 errors.append(f"{method_name}: {type(exc).__name__}: {exc}")
                 continue
 
-            print(f"[OmniVoice] Result type from {method_name}: {type(result)}")
+            self._log(f"Result type from {method_name}: {type(result)}")
             self._persist_result(result, output_file)
 
             if output_file.exists() and output_file.stat().st_size > 0:
