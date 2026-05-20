@@ -19,7 +19,7 @@
 
   "temp_dir": "runtime/temp",
 
-  "process_queue_only": false,
+  "process_queue_only": true,
 
   "queue_status_new": "NEW",
 
@@ -82,6 +82,6 @@
   "scheduler_heartbeat_interval_seconds": 60,
 
   "dashboard_host": "127.0.0.1",
-
+  "google_key_dir": "secrets",
   "dashboard_port": 8080
 }
