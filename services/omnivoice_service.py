@@ -36,6 +36,7 @@ class OmniVoiceService:
     def _resolve_device(self) -> str:
         if self.device != "auto":
             return self.device
+
         try:
             import torch
 
@@ -46,55 +47,67 @@ class OmniVoiceService:
     def _load_model(self) -> Any:
         if self._model is not None:
             return self._model
+
         try:
             if self.model_loader:
                 model = self.model_loader(self.model_name)
             else:
-                try:
-                    from omnivoice import OmniVoice
-                except Exception:
-                    from OmniVoice import OmniVoice
+                from omnivoice import OmniVoice
 
                 model = OmniVoice.from_pretrained(self.model_name)
         except Exception as exc:
             raise OmniVoiceServiceError(
-                "OmniVoice package/model is not available. Install OmniVoice and ensure the model can be loaded."
+                "OmniVoice package/model is not available. "
+                "Install the correct OmniVoice package/model and ensure it can be loaded."
             ) from exc
 
         device = self._resolve_device()
         to_method = getattr(model, "to", None)
+
         if callable(to_method):
             try:
                 model = to_method(device)
             except TypeError:
                 model = to_method(device=device)
+
         self._model = model
         return model
 
     def synthesize(self, text: str, output_file: Path, voice_cfg: dict) -> None:
         ref_audio_path = Path(str(voice_cfg.get("ref_audio_path", "")).strip())
+
         if not ref_audio_path.exists():
-            raise FileNotFoundError(f"OmniVoice ref_audio_path not found: {ref_audio_path}")
+            raise FileNotFoundError(
+                f"OmniVoice ref_audio_path not found: {ref_audio_path}"
+            )
+
         ref_text = str(voice_cfg.get("ref_text", "")).strip()
+
         if not ref_text:
             raise ValueError("OmniVoice ref_text is required")
 
         output_file.parent.mkdir(parents=True, exist_ok=True)
         model = self._load_model()
+
         kwargs = {
             "text": text,
             "ref_audio_path": str(ref_audio_path),
             "ref_text": ref_text,
             "language": voice_cfg.get("language") or voice_cfg.get("language_code", "vi"),
-            "speed": _to_float(voice_cfg.get("speed", voice_cfg.get("speaking_rate")), 1.0),
+            "speed": _to_float(
+                voice_cfg.get("speed", voice_cfg.get("speaking_rate")),
+                1.0,
+            ),
             "pitch": _to_float(voice_cfg.get("pitch"), 0.0),
             "output_path": str(output_file),
         }
 
         for method_name in ("synthesize", "generate", "infer", "tts"):
             method = getattr(model, method_name, None)
+
             if not callable(method):
                 continue
+
             try:
                 result = method(**kwargs)
             except TypeError:
@@ -104,24 +117,37 @@ class OmniVoiceService:
                     ref_text=ref_text,
                     output_path=str(output_file),
                 )
+
             self._persist_result(result, output_file)
+
             if output_file.exists():
                 return
-            raise OmniVoiceServiceError("OmniVoice generation finished but did not create the output file")
 
-        raise OmniVoiceServiceError("Loaded OmniVoice model does not expose synthesize/generate/infer/tts")
+            raise OmniVoiceServiceError(
+                "OmniVoice generation finished but did not create the output file"
+            )
+
+        raise OmniVoiceServiceError(
+            "Loaded OmniVoice model does not expose synthesize/generate/infer/tts"
+        )
 
     def _persist_result(self, result: Any, output_file: Path) -> None:
         if result is None:
             return
+
         if isinstance(result, (bytes, bytearray)):
             output_file.write_bytes(result)
             return
+
         if isinstance(result, (str, Path)):
             source = Path(result)
+
             if source.exists() and source != output_file:
                 output_file.write_bytes(source.read_bytes())
+
             return
+
         save_method = getattr(result, "save", None)
+
         if callable(save_method):
             save_method(str(output_file))
