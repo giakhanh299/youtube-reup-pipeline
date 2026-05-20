@@ -42,6 +42,9 @@ class StructuredLogger:
     def worker(self, event: str, **fields: Any) -> None:
         self._write("worker", "INFO", event, **fields)
 
+    def scheduler(self, event: str, **fields: Any) -> None:
+        self._write("scheduler", "INFO", event, **fields)
+
     def selenium(self, event: str, **fields: Any) -> None:
         self._write("selenium", "INFO", event, **fields)
 
@@ -74,6 +77,9 @@ class NullLogger:
         return None
 
     def worker(self, event: str, **fields: Any) -> None:
+        return None
+
+    def scheduler(self, event: str, **fields: Any) -> None:
         return None
 
     def selenium(self, event: str, **fields: Any) -> None:

@@ -32,6 +32,7 @@ REQUIRED_MODULES = [
     "workers.upload_worker",
     "workers.multi_account_upload_worker",
     "scripts.scheduler_daemon",
+    "scripts.run_scheduler",
     "scripts.dashboard",
     "scripts.export_sheet_snapshot",
     "scripts.setup_google_sheet_schema",

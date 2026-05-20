@@ -1,0 +1,44 @@
+Improve render engine quality for YouTube Shorts/TikTok reup.
+
+Requirements:
+
+1. Upgrade render_service.py.
+
+2. Add fit modes:
+- contain
+- cover
+- crop
+- blur_bg
+
+3. Add cinematic blurred background support.
+
+4. Preserve aspect ratio correctly.
+
+5. Support:
+- 1080x1920
+- 1920x1080
+- 1:1
+
+6. Add ffmpeg filters:
+- scale
+- crop
+- pad
+- gaussian blur
+
+7. Add support:
+- background music mix
+- original audio volume
+- TTS audio volume
+
+8. Add subtitle overlay support.
+
+9. Add overlay logo/image support.
+
+10. Add preview/test render script:
+scripts/test_render_engine.py
+
+11. Add tests.
+
+12. Keep backward compatibility.
+
+13. Update PROJECT_REVIEW.md.

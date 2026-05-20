@@ -1,0 +1,53 @@
+Improve scheduler daemon for full automation.
+
+Requirements:
+
+1. Create:
+scripts/run_scheduler.py
+
+2. Scheduler must:
+- auto loop VIDEO_QUEUE
+- process NEW jobs
+- render videos
+- upload READY_UPLOAD videos
+- update Google Sheet statuses automatically
+
+3. Add:
+- heartbeat logging
+- retry logging
+- crash-safe recovery
+- stale PROCESSING recovery
+- graceful Ctrl+C shutdown
+
+4. Add configurable intervals:
+- render interval
+- upload interval
+- retry interval
+
+5. Prevent duplicate processing.
+
+6. Add queue locking protection.
+
+7. Add worker statistics:
+- processed count
+- uploaded count
+- failed count
+
+8. Add scheduler logs:
+runtime/logs/scheduler.log
+
+9. Add tests:
+tests/test_scheduler_service.py
+
+10. Add Docker compatibility.
+
+11. Update:
+PROJECT_REVIEW.md
+README_SETUP.md
+
+12. Verification:
+- run scheduler locally
+- run unit tests
+- run syntax checks
+
+13. Print exact command to start scheduler daemon.

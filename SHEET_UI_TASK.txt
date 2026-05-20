@@ -1,0 +1,51 @@
+Create automatic Google Sheet schema setup and dropdown UI.
+
+Requirements:
+
+1. Create script:
+scripts/setup_google_sheet_schema.py
+
+2. The script must:
+- read spreadsheet_id and service_account_json from configs/settings.json
+- create missing tabs automatically:
+  CHANNEL_CONFIG
+  VOICE_CONFIG
+  MUSIC_PACK
+  OVERLAY_PACK
+  RENDER_PRESET
+  VIDEO_QUEUE
+
+3. Add required headers automatically.
+
+4. Add default sample rows.
+
+5. Add Google Sheet dropdown/data validation:
+- status
+- upload_status
+- privacyStatus
+- channel_id
+- voice_id
+- music_pack_id
+- overlay_pack_id
+- render_preset_id
+
+6. Add render preset controls:
+- fit_mode
+- background_blur
+- output_width
+- output_height
+- keep_original_audio
+- replace_audio_with_tts
+
+7. Must be safe to run multiple times without deleting existing data.
+
+8. Add tests with mocks.
+
+9. Update:
+PROJECT_REVIEW.md
+README_SETUP.md
+
+10. After implementation:
+- run unit tests
+- run syntax checks
+- print exact command to run setup script.

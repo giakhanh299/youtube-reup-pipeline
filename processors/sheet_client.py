@@ -100,7 +100,15 @@ class SheetConfig:
                 result[key] = row
         return result
 
-    def update_status_by_job_id(self, job_id: str, status: str, output_path: str = "", error: str = "") -> None:
+    def update_status_by_job_id(
+        self,
+        job_id: str,
+        status: str,
+        output_path: str = "",
+        error: str = "",
+        youtube_video_id: str = "",
+        upload_time: str = "",
+    ) -> None:
         if self._sh is None:
             self.connect()
         import gspread
@@ -110,6 +118,8 @@ class SheetConfig:
         status_col = headers.index("status") + 1 if "status" in headers else None
         output_col = headers.index("output_path") + 1 if "output_path" in headers else None
         error_col = headers.index("error") + 1 if "error" in headers else None
+        youtube_video_id_col = headers.index("youtube_video_id") + 1 if "youtube_video_id" in headers else None
+        upload_time_col = headers.index("upload_time") + 1 if "upload_time" in headers else None
         cell = ws.find(job_id, in_column=id_col)
         if not cell:
             return
@@ -120,6 +130,10 @@ class SheetConfig:
             updates.append({"range": gspread.utils.rowcol_to_a1(cell.row, output_col), "values": [[output_path]]})
         if error_col:
             updates.append({"range": gspread.utils.rowcol_to_a1(cell.row, error_col), "values": [[error[:1000]]]})
+        if youtube_video_id_col:
+            updates.append({"range": gspread.utils.rowcol_to_a1(cell.row, youtube_video_id_col), "values": [[youtube_video_id]]})
+        if upload_time_col:
+            updates.append({"range": gspread.utils.rowcol_to_a1(cell.row, upload_time_col), "values": [[upload_time]]})
         if updates:
             ws.batch_update(updates)
 

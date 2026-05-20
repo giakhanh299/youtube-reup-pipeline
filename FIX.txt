@@ -1,0 +1,12 @@
+Fix scripts/setup_google_sheet_schema.py.
+
+Current error:
+condition_type param should be a valid ValidationConditionType
+
+Requirements:
+1. Use correct gspread validation API.
+2. Fix dropdown/data validation creation.
+3. Compatible with current gspread version.
+4. Keep existing functionality.
+5. Re-run tests.
+6. Print exact command to test script again.

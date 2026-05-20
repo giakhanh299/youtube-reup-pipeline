@@ -173,9 +173,18 @@ class SheetRepository:
         status: str,
         output_path: str = "",
         error: str = "",
+        youtube_video_id: str = "",
+        upload_time: str = "",
     ) -> None:
         retry_google_api(
-            lambda: self.sheet.update_status_by_job_id(job_id, status, output_path=output_path, error=error),
+            lambda: self.sheet.update_status_by_job_id(
+                job_id,
+                status,
+                output_path=output_path,
+                error=error,
+                youtube_video_id=youtube_video_id,
+                upload_time=upload_time,
+            ),
             self.retry_strategy,
             "sheets_update_job_status",
         )

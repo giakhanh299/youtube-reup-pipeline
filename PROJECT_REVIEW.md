@@ -555,6 +555,23 @@ volume, subtitle burn-in, and logo overlays while preserving the old
 Added `scripts/test_render_engine.py` to print or run a preview FFmpeg command
 and mocked command-builder tests for all major render modes.
 
+### VIDEO_QUEUE Scheduler Automation
+
+Added `scripts/run_scheduler.py` and `QueueAutomationScheduler` for full
+VIDEO_QUEUE automation. It loops the configured queue, renders rows with
+`status=NEW`, uploads rows with `status=READY_UPLOAD`, writes Google Sheet status
+updates, records uploaded YouTube IDs when the column exists, and logs
+heartbeats/statistics to `runtime/logs/scheduler.log`.
+
+Scheduler safety:
+
+- Local lock file prevents duplicate local scheduler instances.
+- Rows already carrying a YouTube video ID are skipped during upload.
+- Stale `PROCESSING` rows can be recovered back to `NEW`.
+- Ctrl+C/SIGTERM sets a stop event for graceful shutdown.
+- Worker statistics track processed, uploaded, failed, recovered, and skipped
+  counts.
+
 ## Production-Ready Target Architecture
 
 ```text

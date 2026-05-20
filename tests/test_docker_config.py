@@ -17,7 +17,7 @@ class DockerConfigTests(unittest.TestCase):
         self.assertIn("./runtime/logs:/app/runtime/logs", compose)
         self.assertIn("./runtime/state:/app/runtime/state", compose)
         self.assertIn('command: ["python", "pipeline.py"]', compose)
-        self.assertIn('command: ["python", "scripts/scheduler_daemon.py"]', compose)
+        self.assertIn('command: ["python", "scripts/run_scheduler.py"]', compose)
         self.assertIn('command: ["python", "scripts/dashboard.py"]', compose)
 
     def test_dockerfile_installs_ffmpeg_and_uses_existing_entrypoint(self) -> None:

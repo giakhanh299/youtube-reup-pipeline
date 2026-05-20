@@ -32,3 +32,16 @@ VIDEO_QUEUE
 
 Dropdown fields include status, upload status, privacy, channel, voice, music,
 overlay, render preset, and render controls.
+
+## Scheduler
+
+Start the VIDEO_QUEUE automation scheduler from the repository root:
+
+```powershell
+python scripts\run_scheduler.py
+```
+
+The scheduler loops `VIDEO_QUEUE`, renders `NEW` jobs, uploads `READY_UPLOAD`
+jobs, writes status updates back to Google Sheets, logs heartbeat/statistics to
+`runtime/logs/scheduler.log`, and uses a local lock file to avoid duplicate
+local scheduler instances.

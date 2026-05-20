@@ -26,7 +26,7 @@ services:
       - ./runtime/temp:/app/runtime/temp
       - ./configs:/app/configs:ro
       - ./secrets:/app/secrets:ro
-    command: ["python", "scripts/scheduler_daemon.py"]
+    command: ["python", "scripts/run_scheduler.py"]
     restart: unless-stopped
   dashboard:
     build: .
