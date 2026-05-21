@@ -13,9 +13,14 @@ class ChannelSheetConfig:
     channel_id: str
     channel_name: str
     input_folder: str
+    output_folder: str
+    voice_id: str
     voice_name: str
     voice_path: str
-    youtube_oauth_token_json: str
+    music_pack_id: str = ""
+    overlay_pack_id: str = ""
+    render_preset_id: str = ""
+    youtube_oauth_token_json: str = ""
     privacy_status: str = "private"
     enabled: bool = True
     daily_limit: int = 0
@@ -81,17 +86,24 @@ class ChannelSheetRegistry:
             raise ValueError(f"input_folder is required for channel_id={channel_id}")
         privacy_status = str(row.get("privacyStatus") or row.get("privacy_status") or "private").strip() or "private"
         token_path_raw = str(
-            row.get("youtube_oauth_token_json")
+            row.get("youtube_token")
+            or row.get("youtube_oauth_token_json")
             or row.get("youtube_token_path")
             or row.get("youtube_oauth_token_path")
             or ""
         ).strip()
+        output_folder = str(row.get("output_folder", "")).strip()
         return ChannelSheetConfig(
             channel_id=channel_id,
             channel_name=str(row.get("channel_name", "")).strip(),
             input_folder=self.resolve_path(input_folder),
+            output_folder=self.resolve_path(output_folder) if output_folder else "",
+            voice_id=str(row.get("voice_id", "")).strip(),
             voice_name=str(row.get("voice_name", "")).strip(),
             voice_path=self._voice_path_for(row),
+            music_pack_id=str(row.get("music_pack_id", "")).strip(),
+            overlay_pack_id=str(row.get("overlay_pack_id", "")).strip(),
+            render_preset_id=str(row.get("render_preset_id", "")).strip(),
             youtube_oauth_token_json=self.resolve_path(token_path_raw) if token_path_raw else "",
             privacy_status=privacy_status,
             enabled=to_bool(row.get("enabled"), True),

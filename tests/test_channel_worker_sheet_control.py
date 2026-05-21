@@ -67,8 +67,13 @@ class ChannelWorkerSheetControlTests(unittest.TestCase):
             channel_id="ch1",
             channel_name="Channel 1",
             input_folder=str(input_folder),
+            output_folder=str(self.root / "sheet_output"),
+            voice_id="voice_sheet",
             voice_name="cute.wav",
             voice_path=str(self.root / "voices" / "cute.wav"),
+            music_pack_id="music_sheet",
+            overlay_pack_id="overlay_sheet",
+            render_preset_id="preset_sheet",
             youtube_oauth_token_json=str(self.root / "tokens" / "ch1.json"),
             privacy_status="private",
             enabled=True,
@@ -83,6 +88,10 @@ class ChannelWorkerSheetControlTests(unittest.TestCase):
             job_processor,
             uploader,
             {"render_output_dir": str(self.root / "rendered"), "voice_engine": "google"},
+            voices={"voice_sheet": {"active": True, "engine": "google", "tts_engine": "google"}},
+            music_packs={"music_sheet": {"music_path": "music.mp3", "music_volume": 0.2}},
+            overlay_packs={"overlay_sheet": {"logo_path": "logo.png"}},
+            render_presets={"preset_sheet": {"speed": 1.25}},
         )
 
         results = worker.process(max_channels=100)
@@ -92,6 +101,11 @@ class ChannelWorkerSheetControlTests(unittest.TestCase):
         self.assertEqual(job_processor.calls[0]["job_row"]["voice_name"], "cute.wav")
         self.assertEqual(job_processor.calls[0]["job_row"]["ref_audio_path"], channel.voice_path)
         self.assertEqual(job_processor.calls[0]["settings"]["voice_engine"], "omnivoice_local")
+        self.assertEqual(job_processor.calls[0]["channel_cfg"]["voice_id"], "voice_sheet")
+        self.assertEqual(job_processor.calls[0]["channel_cfg"]["music_path"], "music.mp3")
+        self.assertEqual(job_processor.calls[0]["channel_cfg"]["logo_path"], "logo.png")
+        self.assertEqual(job_processor.calls[0]["channel_cfg"]["speed"], 1.25)
+        self.assertEqual(job_processor.calls[0]["voices"]["voice_sheet"]["tts_engine"], "omnivoice_local")
         self.assertEqual(uploader.jobs[0].youtube_token_path, channel.youtube_oauth_token_json)
         self.assertEqual(uploader.jobs[0].privacy_status, "private")
 

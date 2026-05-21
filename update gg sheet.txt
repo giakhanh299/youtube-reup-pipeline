@@ -1,0 +1,31 @@
+Update the CHANNEL_CONFIG Google Sheet integration.
+
+Requirements:
+1. Add support for column:
+   youtube_token
+
+2. Each channel row must fully control:
+   - voice
+   - music
+   - overlay
+   - render preset
+   - input folder
+   - output folder
+   - YouTube token
+
+3. Resolve:
+   voice_id -> VOICE_CONFIG
+   music_pack_id -> MUSIC_PACK
+   overlay_pack_id -> OVERLAY_PACK
+   render_preset_id -> RENDER_PRESET
+
+4. Use youtube_token directly from CHANNEL_CONFIG row.
+
+5. Example:
+channel_id = kenh_1
+youtube_token = secrets/youtube_tokens/channel_001.pickle
+
+6. Keep Google Sheet as the primary control system.
+
+7. Do not use external TTS.
+Use ONLY local OmniVoice.

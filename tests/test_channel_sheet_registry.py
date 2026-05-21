@@ -45,7 +45,13 @@ class ChannelSheetRegistryTests(unittest.TestCase):
                 "channel_id": "ch1",
                 "channel_name": "Channel 1",
                 "input_folder": "input/ch1",
+                "output_folder": "output/ch1",
+                "voice_id": "voice_1",
                 "voice_name": "cute.wav",
+                "music_pack_id": "music_1",
+                "overlay_pack_id": "overlay_1",
+                "render_preset_id": "preset_1",
+                "youtube_token": "tokens/channel_001.pickle",
                 "youtube_oauth_token_json": "tokens/ch1.json",
                 "privacyStatus": "",
                 "enabled": "TRUE",
@@ -67,8 +73,15 @@ class ChannelSheetRegistryTests(unittest.TestCase):
         self.assertEqual(channels[0].channel_id, "ch1")
         self.assertEqual(channels[0].privacy_status, "private")
         self.assertEqual(channels[0].daily_limit, 2)
+        self.assertEqual(channels[0].voice_id, "voice_1")
+        self.assertEqual(channels[0].music_pack_id, "music_1")
+        self.assertEqual(channels[0].overlay_pack_id, "overlay_1")
+        self.assertEqual(channels[0].render_preset_id, "preset_1")
         self.assertEqual(channels[0].voice_path, str((self.voices_dir / "cute.wav").resolve()))
-        self.assertTrue(channels[0].youtube_oauth_token_json.endswith("tokens\\ch1.json") or channels[0].youtube_oauth_token_json.endswith("tokens/ch1.json"))
+        self.assertTrue(
+            channels[0].youtube_oauth_token_json.endswith("tokens\\channel_001.pickle")
+            or channels[0].youtube_oauth_token_json.endswith("tokens/channel_001.pickle")
+        )
 
     def test_missing_input_folder_fails_clearly(self) -> None:
         registry = ChannelSheetRegistry(FakeRepository([{"channel_id": "ch1", "enabled": "TRUE"}], self.root), {}, self.root)

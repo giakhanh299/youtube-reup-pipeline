@@ -37,6 +37,7 @@ def main() -> int:
         logger=logger,
     )
     repository = SheetRepository.from_settings(settings, ROOT, retry_strategy=retry_strategy, logger=logger)
+    _sheet, _channels, voices, music_packs, overlay_packs, render_presets, _queue = repository.load_all()
     registry = ChannelSheetRegistry(repository, settings, ROOT)
     job_processor = VideoJobProcessor(
         ROOT,
@@ -45,7 +46,17 @@ def main() -> int:
         logger=logger,
     )
     uploader = None if args.dry_run else MultiAccountUploader(settings, logger=logger)
-    worker = ChannelWorker(registry, job_processor, uploader, settings, logger=logger)
+    worker = ChannelWorker(
+        registry,
+        job_processor,
+        uploader,
+        settings,
+        voices=voices,
+        music_packs=music_packs,
+        overlay_packs=overlay_packs,
+        render_presets=render_presets,
+        logger=logger,
+    )
     results = worker.process(max_channels=args.max_channels)
     for result in results:
         print(f"{result.status} {result.channel_id} {result.video_path} {result.output_path} {result.youtube_video_id} {result.error}".strip())

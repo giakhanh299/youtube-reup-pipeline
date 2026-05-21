@@ -30,6 +30,10 @@ class ChannelWorker:
         job_processor: VideoJobProcessor,
         uploader: Any,
         settings: dict,
+        voices: dict | None = None,
+        music_packs: dict | None = None,
+        overlay_packs: dict | None = None,
+        render_presets: dict | None = None,
         text_service: TextService | None = None,
         logger: Any = None,
     ):
@@ -37,6 +41,10 @@ class ChannelWorker:
         self.job_processor = job_processor
         self.uploader = uploader
         self.settings = dict(settings)
+        self.voices = voices or {}
+        self.music_packs = music_packs or {}
+        self.overlay_packs = overlay_packs or {}
+        self.render_presets = render_presets or {}
         self.text_service = text_service or TextService()
         self.logger = logger or NullLogger()
 
@@ -53,20 +61,40 @@ class ChannelWorker:
         output_root = Path(self.settings.get("render_output_dir", "runtime/rendered"))
         if not output_root.is_absolute():
             output_root = Path.cwd() / output_root
-        return {
+        cfg = {
             "enabled": channel.enabled,
             "input_folder": channel.input_folder,
-            "output_folder": str(output_root / channel.channel_id),
-            "voice_id": "sheet_omnivoice",
+            "output_folder": channel.output_folder or str(output_root / channel.channel_id),
+            "voice_id": channel.voice_id,
+            "music_pack_id": channel.music_pack_id,
+            "overlay_pack_id": channel.overlay_pack_id,
+            "render_preset_id": channel.render_preset_id,
             "use_nvenc": self.settings.get("use_nvenc", True),
             "background_blur": self.settings.get("background_blur", True),
             "blur_strength": self.settings.get("blur_strength", 28),
             "speed": self.settings.get("speed", 1.0),
         }
+        preset = self.render_presets.get(channel.render_preset_id, {})
+        if preset:
+            cfg.update(preset)
+        music = self.music_packs.get(channel.music_pack_id, {})
+        if music:
+            cfg.update(music)
+        overlay = self.overlay_packs.get(channel.overlay_pack_id, {})
+        if overlay:
+            cfg.update(overlay)
+        return cfg
 
-    def _voices(self) -> dict:
+    def _voices(self, channel: ChannelSheetConfig) -> dict:
+        if channel.voice_id and channel.voice_id in self.voices:
+            voices = dict(self.voices)
+            voice_cfg = dict(voices[channel.voice_id])
+            voice_cfg["engine"] = "omnivoice_local"
+            voice_cfg["tts_engine"] = "omnivoice_local"
+            voices[channel.voice_id] = voice_cfg
+            return voices
         return {
-            "sheet_omnivoice": {
+            channel.voice_id or "sheet_omnivoice": {
                 "active": True,
                 "engine": "omnivoice_local",
                 "tts_engine": "omnivoice_local",
@@ -123,7 +151,7 @@ class ChannelWorker:
                         text_file,
                         channel.channel_id,
                         self._channel_cfg(channel),
-                        self._voices(),
+                        self._voices(channel),
                         settings,
                         job_row=self._job_row(channel, video),
                     )
