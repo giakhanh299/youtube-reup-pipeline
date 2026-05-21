@@ -1,0 +1,87 @@
+TASK: Integrate OmniVoice voice selection from Google Sheet
+
+Project root:
+D:\YOUTUBE_AUTOMATION\reup_pipeline_sheet_control_v2
+
+Goal:
+Add support for choosing cloned voice/reference audio from Google Sheet per video/channel.
+
+Requirements:
+1. Create/ensure folder:
+   runtime/voices
+
+2. Move/expect reference voice .wav files in:
+   runtime/voices/
+
+3. Add config keys if missing:
+   voices_dir = "runtime/voices"
+   default_voice_name = ""
+
+4. Google Sheet support:
+   - Detect optional column: voice_name
+   - Also accept aliases: voice, voice_file, reference_voice
+   - If column exists and has value, use that voice file.
+   - If empty, use default_voice_name from config.
+   - Do not break old sheet structure if column is missing.
+
+5. Implement helper:
+   services/voice_registry.py
+
+Functions:
+   list_voice_files(voices_dir)
+   resolve_voice_path(voice_name, voices_dir, default_voice_name=None)
+
+Rules:
+   - Only allow .wav, .mp3, .flac, .m4a
+   - Prevent path traversal.
+   - Return absolute/resolved path.
+   - Raise clear FileNotFoundError if voice file missing.
+
+6. Update TTS flow:
+   - In services/tts_service.py or services/omnivoice_service.py, accept reference_audio / voice_path.
+   - When processing a row, read voice_name from Sheet row.
+   - Resolve it using voice_registry.
+   - Pass resolved voice_path to OmniVoice generation.
+
+7. Add CLI test:
+   scripts/test_voice_registry.py
+
+It should:
+   - print available voices from runtime/voices
+   - test resolving a given voice
+
+Example:
+   python scripts/test_voice_registry.py
+   python scripts/test_voice_registry.py --voice giongcute.wav
+
+8. Add/Update Google Sheet schema setup:
+   scripts/setup_google_sheet_schema.py
+
+Add optional column:
+   voice_name
+
+Add dropdown values from runtime/voices filenames if possible.
+Do not fail if runtime/voices does not exist; just warn.
+
+9. Add tests:
+   tests/test_voice_registry.py
+
+Test:
+   - list voice files
+   - resolve existing voice
+   - reject ../secret.wav
+   - reject unsupported extension
+   - default voice fallback
+   - clear error when missing
+
+10. Validation commands:
+   python -m py_compile services\voice_registry.py services\tts_service.py services\omnivoice_service.py scripts\test_voice_registry.py scripts\setup_google_sheet_schema.py
+   python -m unittest tests.test_voice_registry
+   python -m unittest discover -s tests -p "test_*.py"
+
+Important:
+- Keep backward compatibility.
+- Do not expose secrets.
+- Do not modify real Google Sheet unless script is explicitly run by user.
+- Default upload/privacy logic must not change.
+- Keep current pipeline entrypoints working.

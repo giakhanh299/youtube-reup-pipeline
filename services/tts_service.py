@@ -38,7 +38,7 @@ class TTSService:
                 device=voice_cfg.get("omnivoice_device") or self.settings.get("omnivoice_device", "auto"),
             ).synthesize(
                 text,
-                voice_cfg.get("ref_audio_path", ""),
+                voice_cfg.get("ref_audio_path") or voice_cfg.get("reference_audio") or voice_cfg.get("voice_path") or "",
                 voice_cfg.get("ref_text", ""),
                 output_file,
                 language=voice_cfg.get("language") or voice_cfg.get("language_code") or self.settings.get("omnivoice_default_language", "vi"),

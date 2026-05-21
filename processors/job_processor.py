@@ -8,6 +8,7 @@ from logs.structured_logger import NullLogger
 from services.render_service import RenderService
 from services.text_service import TextService
 from services.tts_service import TTSService
+from services.voice_registry import resolve_voice_path
 
 
 def safe_name(name: str) -> str:
@@ -29,6 +30,16 @@ def _first_text(row: dict | None, keys: tuple[str, ...]) -> str:
         if value:
             return value
     return ""
+
+
+def _resolve_row_voice_path(root: Path, job_row: dict | None, settings: dict) -> str:
+    voice_name = _first_text(job_row, ("voice_name", "voice", "voice_file", "reference_voice"))
+    default_voice_name = str(settings.get("default_voice_name", "")).strip()
+    if not voice_name and not default_voice_name:
+        return ""
+    voices_dir = settings.get("voices_dir", "runtime/voices")
+    voices_root = _resolve_path(root, voices_dir)
+    return str(resolve_voice_path(voice_name, voices_root, default_voice_name))
 
 
 class VideoJobProcessor:
@@ -93,11 +104,18 @@ class VideoJobProcessor:
                         "tts_engine": job_row.get("tts_engine") or job_row.get("voice_engine") or voice_cfg.get("tts_engine"),
                         "language": job_row.get("language") or voice_cfg.get("language"),
                         "ref_audio_path": job_row.get("ref_audio_path") or voice_cfg.get("ref_audio_path"),
+                        "reference_audio": job_row.get("reference_audio") or voice_cfg.get("reference_audio"),
+                        "voice_path": job_row.get("voice_path") or voice_cfg.get("voice_path"),
                         "ref_text": job_row.get("ref_text") or voice_cfg.get("ref_text"),
                         "speed": job_row.get("speed") or job_row.get("voice_speed") or voice_cfg.get("speed"),
                         "pitch": job_row.get("pitch") or job_row.get("voice_pitch") or voice_cfg.get("pitch"),
                     }
                 )
+            selected_voice_path = _resolve_row_voice_path(self.root, job_row, settings)
+            if selected_voice_path:
+                voice_cfg["ref_audio_path"] = selected_voice_path
+                voice_cfg["reference_audio"] = selected_voice_path
+                voice_cfg["voice_path"] = selected_voice_path
             engine = str(
                 voice_cfg.get("tts_engine") or voice_cfg.get("engine") or settings.get("voice_engine", "omnivoice_local")
             ).strip().lower()

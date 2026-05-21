@@ -1,20 +1,53 @@
-Review the omnivoice-setup branch.
+IMPORTANT CORRECTION:
 
-Focus files:
-- scripts/test_omnivoice_tts.py
-- services/omnivoice_service.py
-- OmniVoice/
+Google Sheet must remain the central control panel for 100 channels.
 
-Problem:
-The script exits silently on Windows PowerShell with no traceback.
+Do NOT make configs/channels.json the main control source.
 
-Tasks:
-- add detailed logging
-- add startup diagnostics
-- add torch/cuda diagnostics
-- catch native crashes where possible
-- validate model loading
-- validate audio paths
-- improve Windows compatibility
-- fail loudly instead of silent exit
-- run validation and syntax checks
+The folder structure is only for storing input videos:
+runtime/input/ch1
+runtime/input/ch2
+runtime/input/ch100
+
+But channel management must come from Google Sheet.
+
+Required Sheet columns:
+- channel_id
+- channel_name
+- input_folder
+- voice_name
+- youtube_oauth_token_json
+- privacyStatus
+- enabled
+- daily_limit
+- worker_id
+- last_error
+
+Workflow:
+1. Read channel rows from Google Sheet.
+2. For each enabled channel row:
+   - get input_folder
+   - scan videos inside that folder
+   - get voice_name from Sheet
+   - resolve voice from runtime/voices
+   - get youtube_oauth_token_json from Sheet
+   - upload to that channel only
+3. Do not rely on filename ch1/ch2 if input_folder is already defined in Sheet.
+4. filename/folder channel detection can be fallback only.
+5. Google Sheet values override local config.
+6. Keep default privacy private.
+7. Use ONLY local OmniVoice.
+8. No external TTS.
+
+Create or update:
+- services/channel_sheet_registry.py
+- workers/channel_worker.py
+- scripts/run_full_production.py
+
+Add tests:
+- tests/test_channel_sheet_registry.py
+- tests/test_channel_worker_sheet_control.py
+
+Final command should be:
+
+python scripts/run_full_production.py --source google_sheet --max-channels 100

@@ -9,6 +9,7 @@ from typing import Any
 
 from logs.structured_logger import NullLogger
 from processors.sheet_client import to_float
+from services.voice_registry import resolve_voice_path
 
 
 @dataclass(frozen=True)
@@ -99,10 +100,24 @@ class DouyinRenderEngine:
         temp_dir.mkdir(parents=True, exist_ok=True)
         output_audio_raw = str(row.get("output_audio_path") or row.get("voice_output_path") or "").strip()
         audio_file = Path(self.resolve_path(output_audio_raw)) if output_audio_raw else temp_dir / f"tts_{int(time.time())}.wav"
+        ref_audio_path = self.resolve_path(row.get("ref_audio_path", ""))
+        voice_name = str(
+            row.get("voice_name")
+            or row.get("voice")
+            or row.get("voice_file")
+            or row.get("reference_voice")
+            or ""
+        ).strip()
+        default_voice_name = str(settings.get("default_voice_name", "")).strip()
+        if voice_name or default_voice_name:
+            voices_dir = Path(self.resolve_path(settings.get("voices_dir", "runtime/voices")))
+            ref_audio_path = str(resolve_voice_path(voice_name, voices_dir, default_voice_name))
         voice_cfg = {
             "engine": row.get("voice_engine") or row.get("tts_engine") or settings.get("voice_engine", "omnivoice_local"),
             "language": row.get("language", settings.get("omnivoice_default_language", "vi")),
-            "ref_audio_path": self.resolve_path(row.get("ref_audio_path", "")),
+            "ref_audio_path": ref_audio_path,
+            "reference_audio": ref_audio_path,
+            "voice_path": ref_audio_path,
             "ref_text": row.get("ref_text", ""),
             "speaking_rate": to_float(row.get("voice_speed"), 1.0),
             "speed": to_float(row.get("speed", row.get("voice_speed")), 1.0),

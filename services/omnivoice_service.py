@@ -116,7 +116,14 @@ class OmniVoiceService:
         output_file = Path(output_file)
         output_file.parent.mkdir(parents=True, exist_ok=True)
 
-        ref_audio_path = Path(str(voice_cfg.get("ref_audio_path", "")).strip())
+        ref_audio_path = Path(
+            str(
+                voice_cfg.get("ref_audio_path")
+                or voice_cfg.get("reference_audio")
+                or voice_cfg.get("voice_path")
+                or ""
+            ).strip()
+        )
 
         if not ref_audio_path.exists():
             raise FileNotFoundError(f"OmniVoice ref_audio_path not found: {ref_audio_path}")

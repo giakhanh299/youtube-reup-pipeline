@@ -11,6 +11,7 @@ if str(ROOT) not in sys.path:
 
 from configs.config_loader import ConfigLoader
 from processors.sheet_client import SheetConfig
+from services.voice_registry import list_voice_files
 
 try:
     from gspread.utils import ValidationConditionType
@@ -34,10 +35,17 @@ SCHEMAS = [
         "CHANNEL_CONFIG",
         [
             "channel_id",
+            "channel_name",
             "enabled",
             "input_folder",
             "output_folder",
             "voice_id",
+            "voice_name",
+            "youtube_oauth_token_json",
+            "privacyStatus",
+            "daily_limit",
+            "worker_id",
+            "last_error",
             "music_pack_id",
             "overlay_pack_id",
             "render_preset_id",
@@ -61,10 +69,17 @@ SCHEMAS = [
         ],
         [
             "kenh_1",
+            "Channel 1",
             "TRUE",
             "runtime/input/kenh_1",
             "runtime/output/kenh_1",
             "voice_female_1",
+            "",
+            "secrets/youtube_token_ch1.pickle",
+            "private",
+            "0",
+            "worker_1",
+            "",
             "music_chill",
             "overlay_logo_1",
             "shorts_blur",
@@ -171,6 +186,7 @@ SCHEMAS = [
             "title_vi",
             "description_vi",
             "script_text",
+            "voice_name",
             "ref_audio_path",
             "ref_text",
             "language",
@@ -178,7 +194,7 @@ SCHEMAS = [
             "voice_output_path",
             "voice_error",
         ],
-        ["job_001", "NEW", "kenh_1", "runtime/test/test.mp4", "", "", "", "Sample title", "Sample description", "test,upload", "22", "private", "", "pending", "", "", "", "0", "", "", "", "Original title", "", "", "", "", "", "", "", "", "Original title", "", "", "", "runtime/ref/ref.wav", "", "vi", "pending", "", ""],
+        ["job_001", "NEW", "kenh_1", "runtime/test/test.mp4", "", "", "", "Sample title", "Sample description", "test,upload", "22", "private", "", "pending", "", "", "", "0", "", "", "", "Original title", "", "", "", "", "", "", "", "", "Original title", "", "", "", "", "runtime/ref/ref.wav", "", "vi", "pending", "", ""],
     ),
     WorksheetSchema(
         "UPLOADED_VIDEOS",
@@ -217,9 +233,10 @@ SCHEMAS = [
 DROPDOWN_VALUES = {
     "status": ["NEW", "PROCESSING", "READY_UPLOAD", "UPLOADED", "ERROR"],
     "upload_status": ["pending", "uploading", "uploaded", "failed", "skipped"],
-    "privacyStatus": ["private", "unlisted", "public"],
     "channel_id": ["kenh_1"],
+    "privacyStatus": ["private", "unlisted", "public"],
     "voice_id": ["voice_omnivoice_1"],
+    "voice_name": [],
     "tts_engine": ["omnivoice_local"],
     "engine": ["omnivoice_local"],
     "voice_status": ["pending", "processing", "done", "error"],
@@ -301,13 +318,25 @@ def ensure_headers_and_sample_row(worksheet: Any, schema: WorksheetSchema) -> li
     return headers
 
 
-def apply_dropdowns(worksheet: Any, headers: list[str]) -> int:
+def _voice_dropdown_values(voices_dir: str | Path | None = None, warn: bool = False) -> list[str]:
+    root = Path(voices_dir) if voices_dir else ROOT / "runtime" / "voices"
+    voices = list_voice_files(root)
+    if warn and not voices:
+        print(f"WARN no voice files found for voice_name dropdown: {root}", file=sys.stderr)
+    return voices
+
+
+def apply_dropdowns(worksheet: Any, headers: list[str], voice_names: list[str] | None = None) -> int:
     applied = 0
     add_validation = getattr(worksheet, "add_validation", None)
     if not callable(add_validation):
         return applied
     header_positions = {_header_key(header): index for index, header in enumerate(headers) if _header_key(header)}
-    for header, values in DROPDOWN_VALUES.items():
+    dropdown_values = dict(DROPDOWN_VALUES)
+    dropdown_values["voice_name"] = voice_names if voice_names is not None else _voice_dropdown_values()
+    for header, values in dropdown_values.items():
+        if not values:
+            continue
         header_index = header_positions.get(_header_key(header))
         if header_index is None:
             continue
@@ -322,12 +351,13 @@ def apply_dropdowns(worksheet: Any, headers: list[str]) -> int:
     return applied
 
 
-def setup_schema(spreadsheet: Any) -> dict[str, dict[str, int]]:
+def setup_schema(spreadsheet: Any, voices_dir: str | Path | None = None, warn_missing_voices: bool = False) -> dict[str, dict[str, int]]:
     results: dict[str, dict[str, int]] = {}
+    voice_names = _voice_dropdown_values(voices_dir, warn=warn_missing_voices)
     for schema in SCHEMAS:
         worksheet = _ensure_worksheet(spreadsheet, schema)
         headers = ensure_headers_and_sample_row(worksheet, schema)
-        validations = apply_dropdowns(worksheet, headers)
+        validations = apply_dropdowns(worksheet, headers, voice_names)
         results[schema.name] = {"headers": len(headers), "validations": validations}
     return results
 
@@ -347,7 +377,8 @@ def main() -> int:
     try:
         settings = ConfigLoader(ROOT).load_settings()
         spreadsheet = connect_spreadsheet(settings)
-        results = setup_schema(spreadsheet)
+        voices_dir = ROOT / settings.get("voices_dir", "runtime/voices")
+        results = setup_schema(spreadsheet, voices_dir, warn_missing_voices=True)
         for name, result in results.items():
             print(f"OK {name}: {result['headers']} headers, {result['validations']} dropdowns")
         print("OK Google Sheet schema setup complete")
