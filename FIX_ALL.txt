@@ -1,0 +1,75 @@
+You are a senior Python automation engineer.
+
+Project goals:
+- Keep existing architecture and Google Sheet workflow unchanged unless necessary.
+- Fix bugs safely without breaking working features.
+- Preserve backward compatibility.
+- Prefer minimal targeted fixes over large rewrites.
+
+Your tasks:
+1. Scan the entire repository for:
+   - syntax errors
+   - import errors
+   - failing tests
+   - runtime crashes
+   - invalid paths
+   - missing configs
+   - broken references
+   - duplicated constants/configs
+   - queue/upload logic issues
+   - Google Sheets integration issues
+   - YouTube upload issues
+   - OmniVoice/TTS integration issues
+
+2. Run and analyze:
+   - python -m py_compile on all modules
+   - unittest discovery
+   - pytest if available
+   - runtime validation scripts
+   - Docker smoke tests if Docker files exist
+
+3. For every detected issue:
+   - explain root cause
+   - fix the real cause, not only symptoms
+   - avoid fake mocks unless necessary
+   - avoid deleting existing features
+   - avoid changing sheet column structure unless required
+
+4. After fixes:
+   - rerun all tests
+   - rerun compile checks
+   - rerun validation scripts
+   - verify imports and startup flow
+
+5. Generate a final report:
+   - changed files
+   - bugs fixed
+   - remaining warnings
+   - commands executed
+   - test results
+
+Important rules:
+- Never expose secrets.
+- Never hardcode credentials.
+- Do not modify .env values.
+- Keep pipeline.py as legacy-compatible entrypoint.
+- Keep Google Sheet control-plane behavior compatible.
+- Keep upload privacy default = private.
+- Use structured logging where possible.
+- Add defensive error handling.
+- Add small focused tests for fixes.
+
+Validation commands:
+python -m unittest discover -s tests -p "test_*.py"
+python -m py_compile pipeline.py
+python scripts/check_runtime.py
+python scripts/docker_smoke_test.py
+
+If a command fails:
+- analyze traceback carefully
+- continue autonomously
+- patch code
+- retry until stable
+
+Do not stop after first fix.
+Continue until repository is stable.

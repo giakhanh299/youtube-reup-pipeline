@@ -79,6 +79,9 @@ class QueueProcessor:
                         status=settings.get("queue_status_processing", "PROCESSING"),
                         channel_id=channel_id,
                         video_path=str(video),
+                        channel_key=str(job.get("channel_key", "")).strip(),
+                        account_name=str(job.get("account_name", "")).strip(),
+                        youtube_token_path=str(job.get("youtube_token_path", "")).strip(),
                     )
                 )
                 self.sheet_repository.update_status_by_job_id(
@@ -121,7 +124,13 @@ class QueueProcessor:
                         description=str(job.get("description", "")).strip(),
                         tags=[item.strip() for item in str(job.get("tags", "")).split(",") if item.strip()],
                         category_id=str(job.get("categoryId", job.get("category_id", ""))).strip(),
-                        privacy_status=str(job.get("privacyStatus", job.get("privacy_status", ""))).strip(),
+                        privacy_status=str(
+                            job.get("privacyStatus", job.get("privacy_status", ""))
+                            or settings.get("youtube_default_privacy", "private")
+                        ).strip(),
+                        channel_key=str(job.get("channel_key", "")).strip(),
+                        account_name=str(job.get("account_name", "")).strip(),
+                        youtube_token_path=str(job.get("youtube_token_path", "")).strip(),
                     )
                 )
             except Exception as exc:

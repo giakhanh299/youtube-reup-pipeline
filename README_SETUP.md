@@ -46,6 +46,62 @@ jobs, writes status updates back to Google Sheets, logs heartbeat/statistics to
 `runtime/logs/scheduler.log`, and uses a local lock file to avoid duplicate
 local scheduler instances.
 
+## Telegram Control API
+
+Start the Telegram control API from the repository root:
+
+```powershell
+python scripts\run_control_api.py
+```
+
+The API exposes:
+
+```text
+GET  /health
+POST /telegram/webhook
+```
+
+Configure these values in `.env` or environment variables:
+
+```text
+TELEGRAM_BOT_TOKEN=...
+TELEGRAM_ALLOWED_CHAT_IDS=123456789,987654321
+PUBLIC_WEBHOOK_URL=https://your-public-url/telegram/webhook
+```
+
+Only chat IDs in `TELEGRAM_ALLOWED_CHAT_IDS` are accepted. Telegram replies do
+not include tokens, credential paths, or other secret values.
+
+Supported Telegram commands:
+
+```text
+/help
+/status
+/run
+/pause
+/resume
+/retry <job_id>
+/render
+/upload
+/sheet
+/logs
+```
+
+Pause/resume and command intents are written locally under:
+
+```text
+runtime/state/control_state.json
+runtime/state/control_events.jsonl
+```
+
+Cloudflare Tunnel can expose the local API for Telegram webhook testing:
+
+```powershell
+cloudflared tunnel --url http://localhost:8000
+```
+
+Then set the Telegram webhook URL to the tunnel URL plus `/telegram/webhook`.
+
 ## OmniVoice TTS
 
 `VOICE_CONFIG` supports OmniVoice clone voices with:

@@ -19,7 +19,14 @@ class QueuePersistenceTests(unittest.TestCase):
     def test_json_queue_persistence_saves_loads_and_marks_failed(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             persistence = JsonQueuePersistence(temp)
-            state = QueueJobState(job_id="job/1", status="PROCESSING", channel_id="kenh_1")
+            state = QueueJobState(
+                job_id="job/1",
+                status="PROCESSING",
+                channel_id="kenh_1",
+                channel_key="main",
+                account_name="account_a",
+                youtube_token_path="token_a.pickle",
+            )
 
             persistence.save_job_state(state)
             loaded = persistence.load_job_state("job/1")
@@ -31,6 +38,9 @@ class QueuePersistenceTests(unittest.TestCase):
         self.assertEqual(failed.status, "ERROR")
         self.assertEqual(failed.error, "boom")
         self.assertEqual(failed.retry_count, 1)
+        self.assertEqual(failed.channel_key, "main")
+        self.assertEqual(failed.account_name, "account_a")
+        self.assertEqual(failed.youtube_token_path, "token_a.pickle")
 
 
 if __name__ == "__main__":

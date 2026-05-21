@@ -102,6 +102,9 @@ class JsonQueuePersistence:
                 tags=existing.tags,
                 category_id=existing.category_id,
                 privacy_status=existing.privacy_status,
+                channel_key=existing.channel_key,
+                account_name=existing.account_name,
+                youtube_token_path=existing.youtube_token_path,
             )
         else:
             state = QueueJobState(job_id=job_id, status="ERROR", error=error, retry_count=1, upload_state="failed")

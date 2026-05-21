@@ -10,6 +10,7 @@ from typing import Any, Callable
 
 from logs.structured_logger import NullLogger
 from repositories.queue_persistence import QueueJobState
+from services.text_service import TextService
 
 
 @dataclass
@@ -189,6 +190,7 @@ class QueueAutomationScheduler:
         settings: dict,
         logger: Any = None,
         clock: Callable[[], float] = time.time,
+        text_service: TextService | None = None,
     ):
         self.repository = repository
         self.job_processor = job_processor
@@ -196,6 +198,7 @@ class QueueAutomationScheduler:
         self.settings = settings
         self.logger = logger or NullLogger()
         self.clock = clock
+        self.text_service = text_service or TextService()
         self.stats = QueueSchedulerStats()
 
     def _log(self, event: str, **fields: Any) -> None:
@@ -240,6 +243,7 @@ class QueueAutomationScheduler:
         processing_status = self.settings.get("queue_status_processing", "PROCESSING")
         done_status = self.settings.get("queue_status_done", "READY_UPLOAD")
         error_status = self.settings.get("queue_status_error", "ERROR")
+        text_priority = self.settings.get("text_exts_priority", ["_vi.srt", ".vi.srt", ".srt", ".txt"])
         processed = 0
         for job in queue:
             if str(job.get("status", "")).strip().upper() != new_status.upper():
@@ -258,10 +262,25 @@ class QueueAutomationScheduler:
                     overlay_packs,
                     render_presets,
                 )
-                video_path = Path(str(job.get("video_path", "")).strip())
-                text_path = Path(str(job.get("text_path", "")).strip())
+                video_raw = str(job.get("video_path", "")).strip()
+                text_raw = str(job.get("text_path", "")).strip()
+                if not video_raw:
+                    raise ValueError("video_path is required")
+                resolve_path = getattr(self.repository, "resolve_path", None)
+                video_path = Path(resolve_path(video_raw) if callable(resolve_path) else video_raw)
+                text_path = Path(resolve_path(text_raw) if callable(resolve_path) else text_raw) if text_raw else None
+                if text_path is None:
+                    text_path = self.text_service.find_for_video(video_path, video_path.parent, text_priority)
                 self.repository.update_status_by_job_id(job_id, processing_status)
-                output = self.job_processor.process_one_video(video_path, text_path, channel_id, channel_cfg, voices, self.settings)
+                output = self.job_processor.process_one_video(
+                    video_path,
+                    text_path,
+                    channel_id,
+                    channel_cfg,
+                    voices,
+                    self.settings,
+                    job_row=job,
+                )
                 self.repository.update_status_by_job_id(job_id, done_status, output_path=output, error="")
                 processed += 1
                 self.stats.processed_count += 1

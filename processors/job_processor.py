@@ -60,7 +60,11 @@ class VideoJobProcessor:
     ) -> str:
         temp_dir = self.root / settings.get("temp_dir", "runtime/temp") / channel_id
         temp_dir.mkdir(parents=True, exist_ok=True)
-        output_folder = Path(channel_cfg["output_folder"])
+        output_folder_raw = str(channel_cfg.get("output_folder", "")).strip()
+        if not output_folder_raw:
+            raise ValueError(f"Missing output_folder for channel_id={channel_id}")
+        output_folder = _resolve_path(self.root, output_folder_raw)
+        output_folder.mkdir(parents=True, exist_ok=True)
         job_name = safe_name(video.stem)
         voice_file = temp_dir / f"{job_name}_{int(time.time())}.wav"
         output_file = output_folder / f"{channel_id}_{job_name}.mp4"

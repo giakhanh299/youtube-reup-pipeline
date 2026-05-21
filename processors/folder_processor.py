@@ -46,7 +46,11 @@ class FolderProcessor:
                 overlay_packs,
                 render_presets,
             )
-            input_folder = Path(channel_cfg["input_folder"])
+            input_folder_raw = str(channel_cfg.get("input_folder", "")).strip()
+            if not input_folder_raw:
+                print(f"ERROR [{channel_id}] missing input_folder")
+                continue
+            input_folder = Path(self.sheet_repository.resolve_path(input_folder_raw))
             if not input_folder.exists():
                 print(f"ERROR [{channel_id}] input_folder not found: {input_folder}")
                 continue

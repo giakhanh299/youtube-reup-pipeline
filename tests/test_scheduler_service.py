@@ -46,6 +46,9 @@ class FakeQueueRepository:
     def merge_pack_into_channel(self, channel, music_packs, overlay_packs, render_presets):
         return dict(channel)
 
+    def resolve_path(self, value):
+        return value
+
     def update_status_by_job_id(self, job_id, status, output_path="", error="", youtube_video_id="", upload_time=""):
         self.updates.append(
             {
@@ -60,7 +63,18 @@ class FakeQueueRepository:
 
 
 class FakeJobProcessor:
-    def process_one_video(self, video, text_file, channel_id, channel_cfg, voices, settings):
+    def __init__(self):
+        self.calls = []
+
+    def process_one_video(self, video, text_file, channel_id, channel_cfg, voices, settings, job_row=None):
+        self.calls.append(
+            {
+                "video": video,
+                "text_file": text_file,
+                "channel_id": channel_id,
+                "job_row": job_row,
+            }
+        )
         return f"rendered/{video.name}"
 
 
@@ -121,7 +135,8 @@ class SchedulerServiceTests(unittest.TestCase):
         repository = FakeQueueRepository(
             [{"job_id": "job_1", "status": "NEW", "channel_id": "kenh_1", "video_path": "a.mp4", "text_path": "a.srt"}]
         )
-        scheduler = QueueAutomationScheduler(repository, FakeJobProcessor(), FakeUploader(), {})
+        job_processor = FakeJobProcessor()
+        scheduler = QueueAutomationScheduler(repository, job_processor, FakeUploader(), {})
 
         processed = scheduler.render_cycle()
 
@@ -130,6 +145,25 @@ class SchedulerServiceTests(unittest.TestCase):
         self.assertEqual(repository.updates[1]["status"], "READY_UPLOAD")
         self.assertEqual(repository.updates[1]["output_path"], "rendered/a.mp4")
         self.assertEqual(scheduler.stats.processed_count, 1)
+        self.assertEqual(job_processor.calls[0]["job_row"]["job_id"], "job_1")
+
+    def test_queue_scheduler_finds_matching_text_when_text_path_is_blank(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            video = root / "a.mp4"
+            subtitle = root / "a_vi.srt"
+            video.write_bytes(b"fake")
+            subtitle.write_text("text", encoding="utf-8")
+            repository = FakeQueueRepository(
+                [{"job_id": "job_1", "status": "NEW", "channel_id": "kenh_1", "video_path": str(video)}]
+            )
+            job_processor = FakeJobProcessor()
+            scheduler = QueueAutomationScheduler(repository, job_processor, FakeUploader(), {})
+
+            processed = scheduler.render_cycle()
+
+        self.assertEqual(processed, 1)
+        self.assertEqual(job_processor.calls[0]["text_file"], subtitle)
 
     def test_queue_scheduler_uploads_ready_jobs_and_records_video_id(self) -> None:
         uploader = FakeUploader()

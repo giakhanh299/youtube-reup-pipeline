@@ -507,6 +507,53 @@ docker compose up dashboard
 Dashboard architecture remains optional and decoupled. It is a monitoring and
 control-intent surface, not a business logic executor.
 
+### Telegram Control API And Cloudflare Tunnel
+
+Added `services/control_api.py` and `scripts/run_control_api.py` for a FastAPI
+control API that can receive Telegram webhooks. The API exposes `GET /health`
+and `POST /telegram/webhook`.
+
+Telegram command support:
+
+```text
+/help
+/status
+/run
+/pause
+/resume
+/retry <job_id>
+/render
+/upload
+/sheet
+/logs
+```
+
+Security and safety:
+
+- Config reads `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ALLOWED_CHAT_IDS`, and
+  `PUBLIC_WEBHOOK_URL` from `.env` or environment variables.
+- Webhook requests from chat IDs not listed in `TELEGRAM_ALLOWED_CHAT_IDS` are
+  rejected.
+- Telegram responses never include tokens or credential paths.
+- Control actions write local state and events under `runtime/state` so the
+  Google Sheet remains the source of truth.
+- The command handler accepts injected action callbacks, allowing tests and
+  future scheduler wiring to call render/upload cycles without hardcoding that
+  behavior into the webhook endpoint.
+
+Cloudflare Tunnel command for local webhook exposure:
+
+```text
+cloudflared tunnel --url http://localhost:8000
+```
+
+Runtime commands:
+
+```text
+python scripts/run_control_api.py
+cloudflared tunnel --url http://localhost:8000
+```
+
 ### Sheet Snapshot Export
 
 Added `scripts/export_sheet_snapshot.py` for local Codex debugging and analysis.

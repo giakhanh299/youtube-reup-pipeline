@@ -1,0 +1,42 @@
+Add Telegram control API with Cloudflare Tunnel support.
+
+Requirements:
+1. Create FastAPI app services/control_api.py
+2. Create script scripts/run_control_api.py
+3. Add endpoints:
+   - GET /health
+   - POST /telegram/webhook
+
+4. Telegram commands:
+   /help
+   /status
+   /run
+   /pause
+   /resume
+   /retry <job_id>
+   /render
+   /upload
+   /sheet
+   /logs
+
+5. Read config from .env or settings:
+   TELEGRAM_BOT_TOKEN
+   TELEGRAM_ALLOWED_CHAT_IDS
+   PUBLIC_WEBHOOK_URL
+
+6. Reject unauthorized chat_id.
+7. Never expose secrets in Telegram messages.
+8. Commands should call existing scheduler/pipeline safely.
+9. Add runtime/state/control_state.json for pause/resume.
+10. Add tests with mocks.
+11. Update README_SETUP.md and PROJECT_REVIEW.md.
+12. Add docs for Cloudflare Tunnel:
+   cloudflared tunnel --url http://localhost:8000
+
+Verification:
+python -m unittest discover -s tests -p "test_*.py"
+python -m py_compile services/control_api.py scripts/run_control_api.py
+
+Print commands to run:
+python scripts/run_control_api.py
+cloudflared tunnel --url http://localhost:8000
