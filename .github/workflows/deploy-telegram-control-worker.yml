@@ -1,0 +1,37 @@
+name: Deploy Telegram Control Worker
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "workers/telegram-control/**"
+      - "docs/TELEGRAM_CLOUDFLARE_WORKER.md"
+      - ".github/workflows/deploy-telegram-control-worker.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: workers/telegram-control
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Validate Worker syntax
+        run: npm run check
+
+      - name: Deploy Worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: npx wrangler deploy

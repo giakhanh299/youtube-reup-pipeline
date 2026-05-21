@@ -1,0 +1,120 @@
+Tạo file:
+
+PHASE_CLOUDFLARE_TELEGRAM_WORKER.txt
+
+Nội dung:
+
+Create a Cloudflare Worker architecture inside this repository for a 24/7 Telegram command center.
+
+Goals:
+
+* Telegram webhook handled by Cloudflare Worker.
+* Worker supports:
+  /start
+  /help
+  /health
+  /upload
+  /process
+  /queue
+  /private
+* No hardcoded secrets.
+* Use env.TELEGRAM_BOT_TOKEN only.
+* Keep existing Python pipeline unchanged.
+* Prepare future integration with FastAPI control API.
+
+Create structure:
+
+workers/
+telegram-control/
+src/
+index.js
+wrangler.toml
+package.json
+README.md
+
+docs/
+TELEGRAM_CLOUDFLARE_WORKER.md
+
+Requirements for src/index.js:
+
+* Export default fetch handler for Cloudflare Worker.
+* GET / returns:
+  "Telegram Control Worker Online ✅"
+* POST handles Telegram webhook updates.
+* Parse:
+  update.message.chat.id
+  update.message.text
+* If no chatId:
+  return Response.json({ ok: true })
+
+Commands:
+
+* /start
+  => "Bot điều khiển hệ thống reup đã online ✅"
+
+* /health
+  => "Worker sống 24/7 ✅"
+
+* /help
+  => multiline command list
+
+* /upload
+  => mock reply only
+
+* /process
+  => mock reply only
+
+* /queue
+  => mock reply only
+
+* /private
+  => mock reply only
+
+Create helper:
+sendTelegram(env, chatId, text)
+
+Telegram API call:
+https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage
+
+Requirements for wrangler.toml:
+name = "telegram-control"
+main = "src/index.js"
+compatibility_date = current date
+
+Requirements for package.json:
+
+* include wrangler dependency
+* include scripts:
+  dev
+  deploy
+
+README.md and docs must explain:
+
+* what the Worker does
+
+* how to install Wrangler
+
+* how to deploy:
+  npm install
+  npx wrangler login
+  npx wrangler deploy
+
+* how to create secret:
+  npx wrangler secret put TELEGRAM_BOT_TOKEN
+
+* how to set Telegram webhook:
+  https://api.telegram.org/bot<TOKEN>/setWebhook?url=<WORKER_URL>
+
+* how to test:
+  /start
+  /health
+  /help
+
+Update PROJECT_REVIEW.md if it exists:
+Add section:
+"Cloudflare Telegram Worker Architecture"
+
+Do not expose secrets.
+Do not commit tokens.
+Run syntax validation if possible.
+Keep code production-ready and modular.

@@ -554,6 +554,85 @@ python scripts/run_control_api.py
 cloudflared tunnel --url http://localhost:8000
 ```
 
+### Cloudflare Telegram Control Architecture
+
+Added a standalone Cloudflare Worker project under:
+
+```text
+workers/telegram-control
+```
+
+Worker files:
+
+```text
+workers/telegram-control/src/index.js
+workers/telegram-control/wrangler.toml
+workers/telegram-control/package.json
+workers/telegram-control/README.md
+docs/TELEGRAM_CLOUDFLARE_WORKER.md
+```
+
+The Worker is a 24/7 Telegram webhook entrypoint and keeps the existing Python
+pipeline unchanged. It supports:
+
+```text
+/start
+/help
+/health
+/upload
+/process
+/queue
+/private
+```
+
+`/upload`, `/process`, `/queue`, and `/private` return mock replies for now.
+Future integration can route those commands to the FastAPI control API without
+hardcoding secrets or pipeline paths in Worker code.
+
+Production Worker URL:
+
+```text
+https://telegramdieukhien.giakhanh299.workers.dev
+```
+
+Security model:
+
+- The Worker reads only `env.TELEGRAM_BOT_TOKEN`.
+- The bot token is created with `npx wrangler secret put TELEGRAM_BOT_TOKEN`.
+- No tokens or secrets are stored in `wrangler.toml`, source files, or docs.
+- Telegram webhook payloads without `message.chat.id` return `{ "ok": true }`
+  without sending a message.
+
+Deployment commands:
+
+```text
+cd workers/telegram-control
+npm install
+npx wrangler login
+npx wrangler secret put TELEGRAM_BOT_TOKEN
+npx wrangler deploy
+```
+
+Recommended Telegram webhook URL:
+
+```text
+https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://telegramdieukhien.giakhanh299.workers.dev/telegram/webhook
+```
+
+The Worker exposes `GET /health` for endpoint checks and accepts webhook updates
+at `POST /telegram/webhook`. Telegram `sendMessage` failures now return a clear
+non-2xx response to make `getWebhookInfo` diagnostics useful without exposing
+the bot token.
+
+GitHub Actions deployment:
+
+- Added `.github/workflows/deploy-telegram-control-worker.yml`.
+- The workflow installs Worker dependencies, runs `npm run check`, and deploys
+  from `workers/telegram-control`.
+- Required GitHub secret: `CLOUDFLARE_API_TOKEN`.
+- Telegram bot token remains a Cloudflare secret:
+  `npx wrangler secret put TELEGRAM_BOT_TOKEN`.
+
 ### Sheet Snapshot Export
 
 Added `scripts/export_sheet_snapshot.py` for local Codex debugging and analysis.

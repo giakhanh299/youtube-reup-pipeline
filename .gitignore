@@ -13,6 +13,7 @@ service_account*.json
 credentials*.json
 client_secret*.json
 .env*
+.dev.vars
 secrets/
 *.pickle
 *.token
@@ -21,6 +22,8 @@ credentials/
 
 # Runtime files
 runtime/
+workers/**/.wrangler/
+workers/**/node_modules/
 *.mp4
 *.mp3
 *.wav

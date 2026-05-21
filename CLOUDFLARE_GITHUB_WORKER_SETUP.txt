@@ -1,0 +1,63 @@
+Repository already connected to Cloudflare Workers.
+
+Production Worker URL:
+https://telegramdieukhien.giakhanh299.workers.dev
+
+Goal:
+Integrate Cloudflare Telegram Worker architecture directly into this GitHub repository.
+
+Requirements:
+
+1. Create structure:
+
+workers/
+  telegram-control/
+    src/
+      index.js
+    wrangler.toml
+    package.json
+    README.md
+
+docs/
+  TELEGRAM_CLOUDFLARE_WORKER.md
+
+2. Telegram Worker requirements:
+- Use Cloudflare Worker runtime.
+- Handle Telegram webhook POST requests.
+- Use env.TELEGRAM_BOT_TOKEN only.
+- Support commands:
+  /start
+  /help
+  /health
+  /upload
+  /process
+  /queue
+  /private
+
+3. Current Worker production URL:
+https://telegramdieukhien.giakhanh299.workers.dev
+
+4. Prepare architecture for future integration with:
+- FastAPI control API
+- Python upload pipeline
+- queue manager
+- multi-worker orchestration
+
+5. Keep existing Python pipeline unchanged.
+
+6. Add deployment instructions:
+- wrangler deploy
+- Cloudflare secrets
+- Telegram setWebhook
+
+7. Add GitHub Actions deployment workflow if suitable.
+
+8. Update PROJECT_REVIEW.md:
+Add section:
+"Cloudflare Telegram Control Architecture"
+
+9. Production-ready code only.
+No hardcoded secrets.
+No token leaks.
+
+10. Validate syntax and project structure after implementation.
