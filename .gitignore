@@ -24,6 +24,7 @@ credentials/
 runtime/
 workers/**/.wrangler/
 workers/**/node_modules/
+workers/**/package-lock.json
 *.mp4
 *.mp3
 *.wav

@@ -14,13 +14,29 @@ https://telegramdieukhien.giakhanh299.workers.dev
 /start
 /help
 /health
+/status
+/run
+/pause
+/resume
+/retry <job_id>
+/render
 /upload
-/process
-/queue
-/private
+/sheet
+/logs
 ```
 
-`/upload`, `/process`, `/queue`, and `/private` are mock replies for now. They do not call the Python pipeline yet.
+If `CONTROL_API_URL` is configured, pipeline commands are forwarded to the Python FastAPI control API at `/telegram/webhook`.
+The Python API still enforces its own allowed Telegram chat IDs.
+
+This Worker also exposes:
+
+```text
+POST /gas/channel-added
+```
+
+Google Apps Script can call this endpoint when a row in `Linkchanel douyin` is marked `Lấy`.
+The request must include header `x-gas-secret`, matching the Cloudflare secret `GAS_SHARED_SECRET`.
+The Worker sends a Telegram notification to `TELEGRAM_ADMIN_CHAT_ID`.
 
 ## Setup
 
@@ -41,6 +57,17 @@ Create the Telegram bot token secret:
 ```powershell
 npx wrangler secret put TELEGRAM_BOT_TOKEN
 ```
+
+Optional secrets for GAS and Python API integration:
+
+```powershell
+npx wrangler secret put GAS_SHARED_SECRET
+npx wrangler secret put TELEGRAM_ADMIN_CHAT_ID
+npx wrangler secret put CONTROL_API_URL
+npx wrangler secret put CONTROL_API_TOKEN
+```
+
+`CONTROL_API_TOKEN` is reserved for deployments that add bearer-token checks to the Python API.
 
 Deploy:
 
@@ -77,6 +104,15 @@ After the webhook is set, test from Telegram:
 /health
 /help
 ```
+
+Apps Script setup:
+
+1. In Apps Script Project Settings, add Script Properties:
+   - `RAPIDAPI_KEY`
+   - `TELEGRAM_CONTROL_URL`, for example `https://telegramdieukhien.giakhanh299.workers.dev`
+   - `GAS_SHARED_SECRET`, same value as the Cloudflare Worker secret
+2. Run `installChannelAddedTrigger()` once from Apps Script and approve permissions.
+3. In the `Linkchanel douyin` tab, set column D to `Lấy` for a channel row.
 
 HTTP checks:
 

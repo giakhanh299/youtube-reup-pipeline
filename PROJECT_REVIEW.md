@@ -633,6 +633,45 @@ GitHub Actions deployment:
 - Telegram bot token remains a Cloudflare secret:
   `npx wrangler secret put TELEGRAM_BOT_TOKEN`.
 
+### Cloudflare MCP Server
+
+Added a standalone remote MCP server under:
+
+```text
+workers/pipeline-mcp
+```
+
+The Worker uses the Cloudflare Agents SDK `McpAgent` pattern with Durable
+Objects and exposes MCP transport at:
+
+```text
+/mcp
+```
+
+Initial public/authless tools:
+
+```text
+health
+telegram_worker_links
+telegram_commands
+production_command
+channel_sheet_columns
+describe_channel_column
+```
+
+The MCP server returns only non-secret operational metadata. It does not expose
+Google credentials, YouTube tokens, `.env` values, or local secret files.
+
+Validation/deploy commands:
+
+```text
+cd workers/pipeline-mcp
+npm install
+npm run check
+npm run dry-run
+npm run deploy
+```
+
 ### Sheet Snapshot Export
 
 Added `scripts/export_sheet_snapshot.py` for local Codex debugging and analysis.
