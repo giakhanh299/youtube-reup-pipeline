@@ -9,7 +9,7 @@
 
   "upload_sheet_name": "YouTube Upload Queue",
 
-  "channel_config_sheet_name": "Channel Config",
+  "channel_config_sheet_name": "CHANNEL_CONFIG",
 
   "batch_size": 10,
 
