@@ -8,17 +8,33 @@ from repositories.sheet_repository import SheetRepository
 
 
 class FakeUploadSheet:
-    def __init__(self):
+    def __init__(self, headers=None):
         self.updated = None
+        self.appended = None
+        self.headers = headers or ["video_path", "upload_status", "channel_id", "youtube_token_path"]
 
     def rows_with_numbers(self, worksheet_name: str):
         return [(2, {"video_path": "video.mp4"})]
+
+    def row_values(self, row_number: int):
+        return self.headers if row_number == 1 else []
+
+    def get_all_values(self):
+        return [self.headers]
 
     def update_upload_result(self, *args, **kwargs):
         self.updated = (args, kwargs)
 
     def update_render_result(self, *args, **kwargs):
         self.render_updated = (args, kwargs)
+
+    def append_row(self, values, value_input_option=None):
+        self.appended = {"values": values, "value_input_option": value_input_option}
+
+    def append_row_by_headers(self, worksheet_name: str, row_data: dict):
+        values = [row_data.get(header, "") for header in self.headers]
+        self.append_row(values, value_input_option="USER_ENTERED")
+        return 2
 
 
 class SheetRepositoryTests(unittest.TestCase):
@@ -138,6 +154,55 @@ class SheetRepositoryTests(unittest.TestCase):
         self.assertIn("main", configs)
         self.assertNotIn("disabled", configs)
         self.assertEqual(configs["main"]["default_privacyStatus"], "private")
+
+    def test_append_row_by_headers_writes_only_existing_columns(self) -> None:
+        fake_sheet = FakeUploadSheet()
+        repository = SheetRepository(fake_sheet, self.root)
+
+        row_number = repository.append_row_by_headers(
+            "YouTube Upload Queue",
+            {
+                "video_path": "runtime/output/channel_001/video.mp4",
+                "upload_status": "pending",
+                "channel_id": "channel_001",
+                "channel_key": "channel_001",
+                "title": "Title",
+                "description": "Desc",
+                "tags": "a,b",
+                "privacyStatus": "private",
+                "categoryId": "22",
+                "youtube_token_path": "secrets/token.pickle",
+                "missing_optional": "ignore",
+            },
+        )
+
+        self.assertEqual(row_number, 2)
+        self.assertEqual(
+            fake_sheet.appended["values"],
+            ["runtime/output/channel_001/video.mp4", "pending", "channel_001", "secrets/token.pickle"],
+        )
+        self.assertEqual(fake_sheet.appended["value_input_option"], "USER_ENTERED")
+
+    def test_append_row_by_headers_ignores_missing_optional_columns(self) -> None:
+        fake_sheet = FakeUploadSheet(headers=["video_path", "upload_status"])
+        repository = SheetRepository(fake_sheet, self.root)
+
+        row_number = repository.append_row_by_headers(
+            "YouTube Upload Queue",
+            {
+                "video_path": "runtime/output/channel_001/video.mp4",
+                "upload_status": "pending",
+                "channel_id": "channel_001",
+                "youtube_token_path": "secrets/token.pickle",
+                "title": "Title",
+            },
+        )
+
+        self.assertEqual(row_number, 2)
+        self.assertEqual(
+            fake_sheet.appended["values"],
+            ["runtime/output/channel_001/video.mp4", "pending"],
+        )
 
 
 if __name__ == "__main__":

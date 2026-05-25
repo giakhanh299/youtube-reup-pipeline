@@ -68,6 +68,7 @@ class FakeRenderService:
 class FakeSheetRepository:
     def __init__(self) -> None:
         self.channel_updates = []
+        self.upload_rows = []
 
     def update_channel_fields_by_channel_id(self, channel_id: str, fields: dict, worksheet_name: str = "CHANNEL_CONFIG") -> None:
         self.channel_updates.append(
@@ -77,6 +78,15 @@ class FakeSheetRepository:
                 "worksheet_name": worksheet_name,
             }
         )
+
+    def append_row_by_headers(self, worksheet_name: str, row_data: dict) -> int:
+        self.upload_rows.append(
+            {
+                "worksheet_name": worksheet_name,
+                "row_data": row_data,
+            }
+        )
+        return len(self.upload_rows) + 1
 
 
 class FakeLogger:
@@ -230,6 +240,94 @@ class ProcessingWorkflowTests(unittest.TestCase):
         self.assertEqual(render_service.calls[0]["input_video"], processing_dir / "clip.mp4")
         self.assertEqual(render_service.calls[0]["channel_cfg"]["subtitle_path"], str(processing_dir / "clip_vi.srt"))
         self.assertTrue((output_dir / "channel_002_clip.mp4").exists())
+
+    def test_rendered_file_registers_pending_upload_row(self) -> None:
+        source_dir = self.root / "legacy_input"
+        processing_dir = self.root / "legacy_input" / "DA_XU_LY"
+        source_dir.mkdir(parents=True)
+        (source_dir / "clip.mp4").write_bytes(b"video")
+        active = ActiveChannelState(
+            channel_id="channel_002",
+            channel_name="Gia Khanh Chanel",
+            youtube_token_path="tokens/ch2.pickle",
+            source_folder_id="drive_folder_2",
+        )
+        sheet_repo = FakeSheetRepository()
+        workflow = ProcessingWorkflow(
+            self.root,
+            {
+                "processing_source_dir": str(source_dir),
+                "processing_work_dir": str(processing_dir),
+                "subtitle_translation_batch_size": 10,
+                "subtitle_translation_batch_delay_seconds": 0,
+                "temp_dir": "runtime/temp",
+                "upload_sheet_name": "YouTube Upload Queue",
+            },
+            active,
+            transcriber=FakeTranscriber(),
+            translator=FakeTranslator(),
+            tts_service=FakeTTSService(),
+            render_service=FakeRenderService(),
+            sheet_repository=sheet_repo,
+            channel_cfg={"voice_id": "voice_omnivoice_1", "output_folder": str(self.root / "runtime" / "output" / "existing_channel")},
+            voices={
+                "voice_omnivoice_1": {
+                    "active": True,
+                    "tts_engine": "omnivoice_local",
+                    "ref_audio_path": str(self.root / "voices" / "ref.wav"),
+                    "ref_text": "reference voice",
+                }
+            },
+        )
+
+        workflow.run()
+
+        self.assertEqual(sheet_repo.upload_rows[0]["worksheet_name"], "YouTube Upload Queue")
+        self.assertEqual(sheet_repo.upload_rows[0]["row_data"]["video_path"], str(self.root / "runtime" / "output" / "existing_channel" / "channel_002_clip.mp4"))
+        self.assertEqual(sheet_repo.upload_rows[0]["row_data"]["upload_status"], "pending")
+
+    def test_rendered_file_registers_youtube_token_path(self) -> None:
+        source_dir = self.root / "legacy_input"
+        processing_dir = self.root / "legacy_input" / "DA_XU_LY"
+        source_dir.mkdir(parents=True)
+        (source_dir / "clip.mp4").write_bytes(b"video")
+        active = ActiveChannelState(
+            channel_id="channel_002",
+            channel_name="Gia Khanh Chanel",
+            youtube_token_path="secrets/channel_002_token.pickle",
+            source_folder_id="drive_folder_2",
+        )
+        sheet_repo = FakeSheetRepository()
+        workflow = ProcessingWorkflow(
+            self.root,
+            {
+                "processing_source_dir": str(source_dir),
+                "processing_work_dir": str(processing_dir),
+                "subtitle_translation_batch_size": 10,
+                "subtitle_translation_batch_delay_seconds": 0,
+                "temp_dir": "runtime/temp",
+                "upload_sheet_name": "YouTube Upload Queue",
+            },
+            active,
+            transcriber=FakeTranscriber(),
+            translator=FakeTranslator(),
+            tts_service=FakeTTSService(),
+            render_service=FakeRenderService(),
+            sheet_repository=sheet_repo,
+            channel_cfg={"voice_id": "voice_omnivoice_1", "output_folder": str(self.root / "runtime" / "output" / "existing_channel")},
+            voices={
+                "voice_omnivoice_1": {
+                    "active": True,
+                    "tts_engine": "omnivoice_local",
+                    "ref_audio_path": str(self.root / "voices" / "ref.wav"),
+                    "ref_text": "reference voice",
+                }
+            },
+        )
+
+        workflow.run()
+
+        self.assertEqual(sheet_repo.upload_rows[0]["row_data"]["youtube_token_path"], "secrets/channel_002_token.pickle")
 
     def test_workflow_passes_configured_omnivoice_model_path_to_tts(self) -> None:
         source_dir = self.root / "legacy_input"

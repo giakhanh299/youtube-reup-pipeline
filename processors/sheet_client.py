@@ -240,6 +240,18 @@ class SheetConfig:
         if updates:
             ws.batch_update(updates)
 
+    def append_row_by_headers(self, worksheet_name: str, row_data: dict[str, Any]) -> int:
+        if self._sh is None:
+            self.connect()
+        ws = self._sh.worksheet(worksheet_name)
+        headers = [str(value).strip() for value in ws.row_values(1)]
+        if not headers:
+            raise ValueError(f"header row is empty in {worksheet_name}")
+        values = [row_data.get(header, "") for header in headers]
+        current_rows = len(ws.get_all_values())
+        ws.append_row(values, value_input_option="USER_ENTERED")
+        return current_rows + 1
+
     def upsert_uploaded_video(self, ledger_row: dict[str, Any]) -> str:
         if self._sh is None:
             self.connect()

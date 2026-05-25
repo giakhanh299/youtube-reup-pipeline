@@ -295,6 +295,13 @@ class SheetRepository:
             "sheets_update_channel_config",
         )
 
+    def append_row_by_headers(self, worksheet_name: str, row_data: dict[str, Any]) -> int:
+        return retry_google_api(
+            lambda: self.sheet.append_row_by_headers(worksheet_name, row_data),
+            self.retry_strategy,
+            "sheets_append_row_by_headers",
+        )
+
     def upsert_uploaded_video(self, ledger_row: dict[str, Any]) -> str:
         return retry_google_api(
             lambda: self.sheet.upsert_uploaded_video(ledger_row),

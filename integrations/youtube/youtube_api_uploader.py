@@ -90,12 +90,13 @@ class YouTubeApiUploader:
         if self.state_callback:
             self.state_callback(state, job)
 
-    def _build_client(self) -> Any:
+    def _build_client(self, token_path: str = "") -> Any:
         if self.client is not None:
             return self.client
         if not self.credentials_path:
             raise ValueError("youtube_oauth_credentials_json is required")
-        if not self.token_path:
+        effective_token_path = str(token_path or self.token_path).strip()
+        if not effective_token_path:
             raise ValueError("youtube_oauth_token_json is required")
 
         from google.auth.transport.requests import Request
@@ -103,7 +104,7 @@ class YouTubeApiUploader:
         from google_auth_oauthlib.flow import InstalledAppFlow
         from googleapiclient.discovery import build
 
-        token = Path(self.token_path)
+        token = Path(effective_token_path)
         credentials = None
         if token.exists():
             if token.suffix.lower() == ".pickle":
@@ -148,7 +149,8 @@ class YouTubeApiUploader:
             raise FileNotFoundError(f"upload video not found: {video_path}")
 
         metadata = self._metadata_for(job)
-        client = self._build_client()
+        effective_token_path = str(job.youtube_token_path or self.token_path).strip()
+        client = self._build_client(effective_token_path)
 
         media_upload_factory = self.media_upload_factory
         if media_upload_factory is None:

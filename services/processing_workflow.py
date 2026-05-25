@@ -398,6 +398,44 @@ class ProcessingWorkflow:
         items = parse_srt(srt_path)
         return " ".join(item.text for item in items if item.text).strip()
 
+    def _handoff_upload_row(self, output_video: Path) -> int:
+        if self.sheet_repository is None or not hasattr(self.sheet_repository, "append_row_by_headers"):
+            self.log(
+                "processing_upload_handoff_skipped",
+                video_path=str(output_video),
+                reason="sheet_repository_missing_or_unsupported",
+            )
+            return -1
+
+        raw_channel = self.channel_cfg.get("raw") or {}
+        upload_sheet_name = str(self.settings.get("upload_sheet_name", "YouTube Upload Queue")).strip() or "YouTube Upload Queue"
+        row_data = {
+            "video_path": str(output_video),
+            "upload_status": "pending",
+            "channel_id": str(self.active_channel.channel_id),
+            "channel_key": str(raw_channel.get("channel_key") or self.channel_cfg.get("channel_key") or self.active_channel.channel_id),
+            "title": output_video.stem,
+            "description": str(raw_channel.get("channel_description") or self.channel_cfg.get("channel_description") or ""),
+            "tags": str(self.channel_cfg.get("tags_default", "") or ""),
+            "privacyStatus": str(raw_channel.get("privacyStatus") or self.channel_cfg.get("privacyStatus") or self.settings.get("youtube_default_privacy", "private")),
+            "categoryId": str(self.settings.get("youtube_default_category_id", "22")),
+            "youtube_token_path": str(self.active_channel.youtube_token_path),
+        }
+        self.log(
+            "processing_upload_handoff_started",
+            upload_sheet_name=upload_sheet_name,
+            video_path=str(output_video),
+            channel_id=self.active_channel.channel_id,
+        )
+        row_number = int(self.sheet_repository.append_row_by_headers(upload_sheet_name, row_data))
+        self.log(
+            "processing_upload_handoff_finished",
+            upload_sheet_name=upload_sheet_name,
+            video_path=str(output_video),
+            row_number=row_number,
+        )
+        return row_number
+
     def render_voice_cloned_videos(self) -> tuple[int, int]:
         if not self.channel_cfg:
             self.log("processing_voice_clone_skipped", reason="channel_config_not_loaded")
@@ -488,6 +526,7 @@ class ProcessingWorkflow:
             voice_tracks += 1
             self.log("processing_render_started", video_path=str(video_path), output_path=str(output_video))
             self.render_service.render_video(video_path, voice_audio, output_video, render_cfg)
+            self._handoff_upload_row(output_video)
             rendered += 1
             self.log("processing_render_finished", video_path=str(video_path), output_path=str(output_video))
             if not keep_audio:
