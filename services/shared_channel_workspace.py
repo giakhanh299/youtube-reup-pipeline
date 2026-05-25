@@ -16,9 +16,9 @@ class ChannelJobAlreadyRunning(RuntimeError):
 
 @dataclass(frozen=True)
 class SharedChannelWorkspace:
-    input_dir: Path
-    processing_dir: Path
-    output_dir: Path
+    input_dir: Path | None
+    processing_dir: Path | None
+    output_dir: Path | None
     lock_path: Path
 
 
@@ -30,11 +30,16 @@ class SharedChannelWorkspaceManager:
         settings = settings or {}
         self.logger = logger
         self.workspace = SharedChannelWorkspace(
-            input_dir=self._resolve(settings.get("shared_input_dir", "runtime/input")),
-            processing_dir=self._resolve(settings.get("shared_processing_dir", "runtime/processing")),
-            output_dir=self._resolve(settings.get("shared_output_dir", "runtime/output")),
+            input_dir=self._optional_path(settings.get("shared_input_dir")),
+            processing_dir=self._optional_path(settings.get("shared_processing_dir")),
+            output_dir=self._optional_path(settings.get("shared_output_dir")),
             lock_path=self._resolve(settings.get("active_channel_lock_path", "runtime/state/active_channel.lock")),
         )
+
+    def _optional_path(self, value: Any) -> Path | None:
+        if value is None or str(value).strip() == "":
+            return None
+        return self._resolve(value)
 
     def _resolve(self, value: Any) -> Path:
         path = Path(str(value))
@@ -43,10 +48,20 @@ class SharedChannelWorkspaceManager:
         return (self.root / path).resolve()
 
     def ensure_dirs(self) -> None:
-        self.workspace.input_dir.mkdir(parents=True, exist_ok=True)
-        self.workspace.processing_dir.mkdir(parents=True, exist_ok=True)
-        self.workspace.output_dir.mkdir(parents=True, exist_ok=True)
+        for folder in self.work_folders():
+            folder.mkdir(parents=True, exist_ok=True)
         self.workspace.lock_path.parent.mkdir(parents=True, exist_ok=True)
+
+    def work_folders(self) -> list[Path]:
+        return [
+            folder
+            for folder in (
+                self.workspace.input_dir,
+                self.workspace.processing_dir,
+                self.workspace.output_dir,
+            )
+            if folder is not None
+        ]
 
     def log(self, event: str, **fields: Any) -> None:
         if self.logger is not None and hasattr(self.logger, "worker"):
@@ -77,7 +92,7 @@ class SharedChannelWorkspaceManager:
 
     def clean(self, label: str = "cleanup") -> None:
         self.ensure_dirs()
-        for folder in (self.workspace.input_dir, self.workspace.processing_dir, self.workspace.output_dir):
+        for folder in self.work_folders():
             self.clean_folder(folder, label=label)
 
     def clean_folder(self, folder: Path, label: str = "cleanup") -> None:
@@ -91,7 +106,8 @@ class SharedChannelWorkspaceManager:
     def clean_processing_and_output(self, label: str = "cleanup") -> None:
         self.ensure_dirs()
         for folder in (self.workspace.processing_dir, self.workspace.output_dir):
-            self.clean_folder(folder, label=label)
+            if folder is not None:
+                self.clean_folder(folder, label=label)
 
     def _remove_path(self, path: Path) -> None:
         try:

@@ -40,7 +40,7 @@ class ActiveChannelStateStore:
         if self.logger is not None and hasattr(self.logger, "worker"):
             self.logger.worker(event, **fields)
 
-    def select(self, channel: ChannelSheetConfig, resume: bool = False, clean_before_start: bool = True) -> ActiveChannelState:
+    def select(self, channel: ChannelSheetConfig, resume: bool = False, clean_before_start: bool = False) -> ActiveChannelState:
         self.workspace.acquire(channel.channel_id, channel.channel_name)
         self.state_path.parent.mkdir(parents=True, exist_ok=True)
         if clean_before_start and not resume:
@@ -59,10 +59,8 @@ class ActiveChannelStateStore:
             channel_name=state.channel_name,
             youtube_token_path=state.youtube_token_path,
             source_folder_id=state.source_folder_id,
-            input_folder=str(self.workspace.workspace.input_dir),
-            processing_folder=str(self.workspace.workspace.processing_dir),
-            output_folder=str(self.workspace.workspace.output_dir),
             resume=resume,
+            clean_before_start=clean_before_start,
         )
         return state
 
@@ -78,7 +76,7 @@ class ActiveChannelStateStore:
             selected_at=str(data.get("selected_at", "")).strip(),
         )
 
-    def finish(self, clean_after_finish: bool = True) -> None:
+    def finish(self, clean_after_finish: bool = False) -> None:
         if clean_after_finish:
             self.workspace.clean(label="post_finish")
         try:

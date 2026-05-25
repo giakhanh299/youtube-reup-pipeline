@@ -1,67 +1,52 @@
 # Active Channel Workflow
 
-This project keeps the existing processing workflow and adds an active-channel
-control layer on top of it.
+This project keeps the existing folder layout and processing workflow. The
+active-channel system is only a small control layer for selecting the channel
+and upload token.
 
-The old processing scripts remain responsible for video/subtitle/voice work:
+Reference-only legacy scripts:
 
 ```text
-RUN.py
 lay_sub.py
 dich_gemini.py
 long_tieng_final.py
 ```
 
-Those scripts are intentionally not redesigned by the active-channel system.
-Google Apps Script still handles video fetching/downloading/preparation before
-Python processing starts.
+These files are not integrated, rewritten, or forced into the new workflow.
+They remain examples of the old subtitle, translation, and local dubbing logic.
 
-## Purpose
-
-Only one channel may run at a time because the workflow uses shared runtime
-folders. Telegram or another controller selects the active channel first, then
-the existing workflow runs normally.
+## What Active Channel Does
 
 Active channel selection controls:
 
-- which `CHANNEL_CONFIG.channel_id` is active
-- which `CHANNEL_CONFIG.channel_name` is logged
-- which `CHANNEL_CONFIG.youtube_token` / `youtube_oauth_token_json` is used for upload
-- which `CHANNEL_CONFIG.source_folder_id` is logged for reference
-- whether another channel job is blocked by the active-channel lock
+- selected `CHANNEL_CONFIG.channel_id`
+- selected `CHANNEL_CONFIG.channel_name`
+- selected `CHANNEL_CONFIG.youtube_token` / `youtube_oauth_token_json`
+- logged `CHANNEL_CONFIG.source_folder_id`
+- one-channel-at-a-time lock protection
 
-It does not download Google Drive videos in Python and it does not replace the
-legacy processing scripts.
+Python does not use `source_folder_id` to download from Google Drive. GAS still
+handles video fetching/downloading and sheet workflow.
 
-## Shared Runtime Folders
+## What Active Channel Does Not Do
 
-The shared folders are configured in `configs/settings.json`:
+The active-channel layer does not:
 
-```json
-"shared_input_dir": "runtime/input",
-"shared_processing_dir": "runtime/processing",
-"shared_output_dir": "runtime/output",
-"active_channel_lock_path": "runtime/state/active_channel.lock",
-"active_channel_state_path": "runtime/state/active_channel.json"
-```
+- change the Google Sheet layout
+- change existing folder paths
+- force `runtime/input`, `runtime/processing`, or `runtime/output`
+- run or rewrite `lay_sub.py`
+- run or rewrite `dich_gemini.py`
+- run or rewrite `long_tieng_final.py`
+- replace the existing processing pipeline
 
-The intended folder roles are:
-
-```text
-runtime/input       GAS or existing scripts place prepared input files here.
-runtime/processing  Temporary working folder for runtime processing.
-runtime/output      Final local output before upload/cleanup.
-```
-
-For backward compatibility, the old scripts can still use their existing
-hardcoded folders. If you later point them at the shared runtime folders, make
-that configurable and keep their old defaults.
+The current working folder behavior stays the source of truth for processing.
 
 ## Runtime State Files
 
 ### `runtime/state/active_channel.json`
 
-Stores the currently selected channel:
+Stores the selected channel:
 
 ```json
 {
@@ -78,13 +63,13 @@ path. Explicit job token paths still take priority for backward compatibility.
 
 ### `runtime/state/active_channel.lock`
 
-Prevents two channel jobs from using the shared folders at the same time. If the
-lock exists, selecting another channel should fail until the current channel is
-finished or recovered.
+Prevents two channel sessions from running at the same time. If the lock exists,
+selecting another channel fails until the current channel is finished or
+recovered.
 
 ## Production Workflow
 
-Run these commands from the repository root:
+Run commands from the repository root:
 
 ```powershell
 cd D:\YOUTUBE_AUTOMATION\reup_pipeline_sheet_control_v2
@@ -96,32 +81,29 @@ cd D:\YOUTUBE_AUTOMATION\reup_pipeline_sheet_control_v2
 python scripts\run_full_production.py --channel-id channel_001
 ```
 
-This does not run the processing pipeline. It only:
+This only:
 
 - validates and selects `channel_001` from `CHANNEL_CONFIG`
 - writes `runtime/state/active_channel.json`
 - creates `runtime/state/active_channel.lock`
-- cleans shared runtime folders before start
 - prepares upload token selection for the selected channel
-- logs selected `channel_id`, `channel_name`, `youtube_token_path`, `source_folder_id`, and shared folders
+- logs selected `channel_id`, `channel_name`, `youtube_token_path`, and `source_folder_id`
 
-If you need to keep existing shared-folder files during recovery:
+It does not run video processing and does not change existing folder paths.
 
-```powershell
-python scripts\run_full_production.py --channel-id channel_001 --resume
-```
+### Step 2: Run Current Workflow
 
-### Step 2: Run Existing Workflow Normally
+Run the current working process normally. GAS still handles video
+fetching/downloading and preparation. Existing Python scripts or other tools
+continue using their current folders.
 
-Use the existing scripts exactly as before.
-
-Full legacy wrapper:
+Examples:
 
 ```powershell
 python RUN.py
 ```
 
-Or run individual steps:
+or:
 
 ```powershell
 python lay_sub.py
@@ -129,13 +111,9 @@ python dich_gemini.py
 python long_tieng_final.py
 ```
 
-These scripts are intentionally unchanged. GAS and the existing scripts remain
-responsible for fetching, preparing, subtitle extraction/translation, and voice
-processing according to the current folder behavior.
+These scripts are intentionally unchanged.
 
-### Step 3: Finish And Cleanup
-
-After processing/upload finishes:
+### Step 3: Finish Active Channel
 
 ```powershell
 python scripts\finish_active_channel.py
@@ -143,47 +121,39 @@ python scripts\finish_active_channel.py
 
 This:
 
-- cleans `runtime/input`
-- cleans `runtime/processing`
-- cleans `runtime/output`
 - removes `runtime/state/active_channel.json`
 - releases `runtime/state/active_channel.lock`
 
-If you only need to release state without cleanup:
+It does not clean processing folders by default, because the active-channel
+layer must not assume or change the current folder structure.
+
+Optional cleanup is available only if your runtime folder settings are
+configured intentionally:
 
 ```powershell
-python scripts\finish_active_channel.py --no-clean
+python scripts\finish_active_channel.py --clean-runtime
 ```
 
 ## Architecture
 
 ```text
-Telegram / GAS selects channel
+Telegram/GAS selects channel
           |
           v
 Python writes active channel state and lock
           |
           v
-GAS prepares videos for selected channel
+GAS prepares videos using existing workflow
           |
           v
-Old workflow scripts process videos unchanged
+Current processing workflow runs with current folder paths
           |
           v
 Uploader reads active channel token when no job token is set
           |
           v
-Finish script cleans shared folders and releases lock
+Finish script releases active channel state and lock
 ```
-
-Python's role in this flow is narrow:
-
-- manage active-channel state
-- protect the shared folders with one-channel-at-a-time locking
-- expose the selected channel token to upload routing
-- clean shared runtime folders before and after a channel session
-
-Python does not implement Google Drive video download by `source_folder_id`.
 
 ## Troubleshooting
 
@@ -195,69 +165,37 @@ Symptom:
 active channel job lock exists
 ```
 
-Cause: a previous workflow crashed or did not run the finish step.
-
-Check current state:
+Check:
 
 ```powershell
 Get-Content runtime\state\active_channel.json
 Get-Content runtime\state\active_channel.lock
 ```
 
-If no workflow is running, release and clean:
+If no workflow is running:
 
 ```powershell
 python scripts\finish_active_channel.py
 ```
 
-If you need to inspect files before cleanup:
-
-```powershell
-python scripts\finish_active_channel.py --no-clean
-```
-
 ### Active Channel Mismatch
 
-Symptom: the selected channel in logs/state is not the channel you expected.
-
-Check:
+Check selected channel:
 
 ```powershell
 Get-Content runtime\state\active_channel.json
 ```
 
-Then finish the current session and select the correct channel:
+Then finish and select the correct channel:
 
 ```powershell
 python scripts\finish_active_channel.py
 python scripts\run_full_production.py --channel-id channel_002
 ```
 
-### Shared Runtime Folder Not Cleaned
-
-Inspect folders:
-
-```powershell
-Get-ChildItem runtime\input
-Get-ChildItem runtime\processing
-Get-ChildItem runtime\output
-```
-
-Clean through the normal finish path:
-
-```powershell
-python scripts\finish_active_channel.py
-```
-
 ### Wrong YouTube Token Used
 
-Check the selected channel state:
-
-```powershell
-Get-Content runtime\state\active_channel.json
-```
-
-Also check the relevant `CHANNEL_CONFIG` row:
+Check `active_channel.json` and the selected `CHANNEL_CONFIG` row:
 
 ```text
 channel_id
@@ -268,25 +206,15 @@ source_folder_id
 enabled
 ```
 
-Upload jobs with an explicit `youtube_token_path` still override active-channel
-state. This is preserved for backward compatibility.
+If an upload job explicitly sets `youtube_token_path`, that explicit token still
+wins. This preserves old behavior.
 
 ### Interrupted Or Crashed Workflow Recovery
 
-If the process crashes after channel selection:
-
 1. Confirm no script is still running.
 2. Inspect `runtime/state/active_channel.json`.
-3. Inspect shared folders if needed.
-4. Either resume or finish.
-
-Resume without pre-clean:
-
-```powershell
-python scripts\run_full_production.py --channel-id channel_001 --resume
-```
-
-Finish and clean:
+3. Preserve any working folders you need.
+4. Release the lock:
 
 ```powershell
 python scripts\finish_active_channel.py
@@ -294,8 +222,8 @@ python scripts\finish_active_channel.py
 
 ## Backward Compatibility Notes
 
-- The old processing scripts remain unchanged.
-- Existing per-job upload token paths still take priority.
-- Existing multi-channel Python processing remains available for current code paths.
-- `source_folder_id` is read and logged only; Python does not use it for Drive download.
-- The active-channel workflow is an added control layer for single-channel shared-folder operation.
+- Existing Google Sheet layout is unchanged.
+- Existing folder paths are unchanged.
+- GAS still handles video fetching/downloading.
+- Legacy scripts are reference examples only.
+- Existing explicit upload token paths still take priority.

@@ -14,13 +14,13 @@ from services.active_channel_state import ActiveChannelStateStore
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Finish the selected channel session and clean shared runtime folders.")
-    parser.add_argument("--no-clean", action="store_true", help="Release active channel state without cleaning shared folders.")
+    parser = argparse.ArgumentParser(description="Finish the selected channel session and release the active-channel lock.")
+    parser.add_argument("--clean-runtime", action="store_true", help="Also clean configured runtime work folders.")
     args = parser.parse_args()
 
     settings = ConfigLoader(ROOT).load_settings()
     logger = StructuredLogger(ROOT / settings.get("log_dir", "runtime/logs"))
-    ActiveChannelStateStore(ROOT, settings, logger=logger).finish(clean_after_finish=not args.no_clean)
+    ActiveChannelStateStore(ROOT, settings, logger=logger).finish(clean_after_finish=args.clean_runtime)
     print("active channel finished")
     return 0
 

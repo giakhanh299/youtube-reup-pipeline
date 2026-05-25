@@ -129,17 +129,9 @@ runtime/state/active_channel.json
 runtime/state/active_channel.lock
 ```
 
-Only one channel may run at a time because shared runtime folders are used:
-
-```text
-runtime/input
-runtime/processing
-runtime/output
-```
-
 GAS still handles video fetching/downloading. Python only stores the selected
-channel, protects the shared folders with a lock, routes upload token selection,
-and cleans shared runtime folders when the channel session is finished.
+channel, protects the active channel with a lock, and routes upload token
+selection. Existing folder paths and processing scripts remain unchanged.
 
 Cloudflare Tunnel can expose the local API for Telegram webhook testing:
 

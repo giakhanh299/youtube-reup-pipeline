@@ -64,6 +64,20 @@ class ActiveChannelStateTests(unittest.TestCase):
         self.assertFalse((self.root / "runtime" / "state" / "active_channel.lock").exists())
         self.assertFalse((self.root / "runtime" / "state" / "active_channel.json").exists())
 
+    def test_select_does_not_create_runtime_work_folders_by_default(self) -> None:
+        settings = {
+            "active_channel_lock_path": str(self.root / "runtime" / "state" / "active_channel.lock"),
+            "active_channel_state_path": str(self.root / "runtime" / "state" / "active_channel.json"),
+        }
+        store = ActiveChannelStateStore(self.root, settings)
+
+        store.select(self._channel(), clean_before_start=False)
+
+        self.assertFalse((self.root / "runtime" / "input").exists())
+        self.assertFalse((self.root / "runtime" / "processing").exists())
+        self.assertFalse((self.root / "runtime" / "output").exists())
+        store.finish(clean_after_finish=False)
+
     def test_lock_prevents_second_active_channel(self) -> None:
         settings = {
             "active_channel_lock_path": str(self.root / "runtime" / "state" / "active_channel.lock"),
