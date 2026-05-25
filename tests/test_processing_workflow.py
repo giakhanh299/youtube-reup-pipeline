@@ -79,6 +79,14 @@ class FakeSheetRepository:
         )
 
 
+class FakeLogger:
+    def __init__(self) -> None:
+        self.worker_calls = []
+
+    def worker(self, event: str, **fields) -> None:
+        self.worker_calls.append({"event": event, "fields": fields})
+
+
 class ProcessingWorkflowTests(unittest.TestCase):
     def setUp(self) -> None:
         base = Path.home() / ".codex" / "memories"
@@ -317,6 +325,23 @@ class ProcessingWorkflowTests(unittest.TestCase):
 
     def test_shift_time_clamps_to_zero(self) -> None:
         self.assertEqual(shift_time("00:00:01,000 --> 00:00:03,000", seconds_offset=-2), "00:00:00,000 --> 00:00:01,000")
+
+    def test_logger_strips_duplicate_active_channel_fields(self) -> None:
+        active = ActiveChannelState(
+            channel_id="channel_002",
+            channel_name="Gia Khanh Chanel",
+            youtube_token_path="tokens/ch2.pickle",
+            source_folder_id="drive_folder_2",
+        )
+        logger = FakeLogger()
+        workflow = ProcessingWorkflow(self.root, {}, active, logger=logger)
+
+        workflow.log("processing_started", channel_id="override", channel_name="override", source_folder_id="override", foo="bar")
+
+        self.assertEqual(logger.worker_calls[0]["fields"]["channel_id"], "channel_002")
+        self.assertEqual(logger.worker_calls[0]["fields"]["channel_name"], "Gia Khanh Chanel")
+        self.assertEqual(logger.worker_calls[0]["fields"]["source_folder_id"], "drive_folder_2")
+        self.assertEqual(logger.worker_calls[0]["fields"]["foo"], "bar")
 
 
 if __name__ == "__main__":

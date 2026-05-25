@@ -245,12 +245,16 @@ class ProcessingWorkflow:
 
     def log(self, event: str, **fields: Any) -> None:
         if self.logger is not None and hasattr(self.logger, "worker"):
+            metadata = dict(fields)
+            metadata.pop("channel_id", None)
+            metadata.pop("channel_name", None)
+            metadata.pop("source_folder_id", None)
             self.logger.worker(
                 event,
                 channel_id=self.active_channel.channel_id,
                 channel_name=self.active_channel.channel_name,
                 source_folder_id=self.active_channel.source_folder_id,
-                **fields,
+                **metadata,
             )
 
     def _transcriber(self) -> Transcriber:
