@@ -288,6 +288,13 @@ class SheetRepository:
             "sheets_update_video_queue_metadata",
         )
 
+    def update_channel_fields_by_channel_id(self, channel_id: str, fields: dict[str, Any], worksheet_name: str = "CHANNEL_CONFIG") -> None:
+        retry_google_api(
+            lambda: self.sheet.update_channel_fields_by_channel_id(channel_id, fields, worksheet_name=worksheet_name),
+            self.retry_strategy,
+            "sheets_update_channel_config",
+        )
+
     def upsert_uploaded_video(self, ledger_row: dict[str, Any]) -> str:
         return retry_google_api(
             lambda: self.sheet.upsert_uploaded_video(ledger_row),

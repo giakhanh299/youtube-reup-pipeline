@@ -110,17 +110,21 @@ Production outline:
 
 ```powershell
 python scripts\run_full_production.py --channel-id channel_001
-python RUN.py
+python scripts\run_processing_workflow.py
 python scripts\finish_active_channel.py
 ```
 
-Or run the old scripts manually between select and finish:
+The old scripts are still available as references/manual fallback:
 
 ```powershell
 python lay_sub.py
 python dich_gemini.py
 python long_tieng_final.py
 ```
+
+`scripts\run_processing_workflow.py` also uses the selected channel's
+`voice_id` and `VOICE_CONFIG` row to create OmniVoice/local cloned audio, then
+renders the processed video to the channel `output_folder`. It does not upload.
 
 State files:
 

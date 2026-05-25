@@ -23,6 +23,26 @@
 
   "active_channel_state_path": "runtime/state/active_channel.json",
 
+  "processing_source_dir": "G:/My Drive/Video Doujin/VIDEO IN PUT GIAKHANH CHANEL",
+
+  "processing_work_dir": "G:/My Drive/Video Doujin/VIDEO IN PUT GIAKHANH CHANEL/DA_XU_LY",
+
+  "subtitle_whisper_model_size": "medium",
+
+  "subtitle_translation_api_key": "",
+
+  "subtitle_translation_base_url": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+
+  "subtitle_translation_model": "qwen-plus",
+
+  "subtitle_translation_batch_size": 10,
+
+  "subtitle_translation_batch_delay_seconds": 0.5,
+
+  "subtitle_translation_currency_rate": 4000,
+
+  "processing_keep_voice_audio": false,
+
   "process_queue_only": true,
 
   "queue_status_new": "NEW",

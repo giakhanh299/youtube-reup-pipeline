@@ -58,6 +58,12 @@ def apply_env_overrides(settings: dict, env: dict[str, str] | None = None, prefi
         "YOUTUBE_TOKEN_PICKLE_PATH": ("youtube_oauth_token_json", "YOUTUBE_OAUTH_TOKEN_JSON"),
         "YOUTUBE_DEFAULT_PRIVACY": ("youtube_default_privacy", "YOUTUBE_DEFAULT_PRIVACY"),
         "YOUTUBE_CATEGORY_ID": ("youtube_default_category_id", "YOUTUBE_DEFAULT_CATEGORY_ID"),
+        "SUBTITLE_TRANSLATION_API_KEY": ("subtitle_translation_api_key", "SUBTITLE_TRANSLATION_API_KEY"),
+        "DASHSCOPE_API_KEY": ("subtitle_translation_api_key", "SUBTITLE_TRANSLATION_API_KEY"),
+        "QWEN_API_KEY": ("subtitle_translation_api_key", "SUBTITLE_TRANSLATION_API_KEY"),
+        "OPENAI_API_KEY": ("subtitle_translation_api_key", "SUBTITLE_TRANSLATION_API_KEY"),
+        "SUBTITLE_TRANSLATION_BASE_URL": ("subtitle_translation_base_url", "SUBTITLE_TRANSLATION_BASE_URL"),
+        "SUBTITLE_TRANSLATION_MODEL": ("subtitle_translation_model", "SUBTITLE_TRANSLATION_MODEL"),
     }
     for env_key, (setting_key, canonical_env_name) in legacy_aliases.items():
         prefixed_key = f"{prefix}{env_key}"

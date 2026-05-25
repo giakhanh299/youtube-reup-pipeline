@@ -1,13 +1,27 @@
 from __future__ import annotations
 
 from pathlib import Path
-import tempfile
+import shutil
 import unittest
+import uuid
 
 from configs.config_loader import ConfigLoader, apply_env_overrides, load_env_file
 
 
 class ConfigLoaderTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.temp_roots: list[Path] = []
+
+    def tearDown(self) -> None:
+        for root in self.temp_roots:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def _temp_root(self) -> Path:
+        root = Path.cwd() / "runtime" / "test_config_loader" / uuid.uuid4().hex
+        root.mkdir(parents=True, exist_ok=True)
+        self.temp_roots.append(root)
+        return root
+
     def test_apply_env_overrides_coerces_existing_value_types(self) -> None:
         settings = {
             "process_queue_only": False,
@@ -33,25 +47,24 @@ class ConfigLoaderTests(unittest.TestCase):
         self.assertEqual(merged["spreadsheet_id"], "new")
 
     def test_load_env_file_ignores_comments_and_blank_lines(self) -> None:
-        with tempfile.TemporaryDirectory() as temp:
-            env_path = Path(temp) / ".env"
-            env_path.write_text("\n# comment\nYT_SPREADSHEET_ID='abc'\n", encoding="utf-8")
+        root = self._temp_root()
+        env_path = root / ".env"
+        env_path.write_text("\n# comment\nYT_SPREADSHEET_ID='abc'\n", encoding="utf-8")
 
-            values = load_env_file(env_path)
+        values = load_env_file(env_path)
 
         self.assertEqual(values, {"YT_SPREADSHEET_ID": "abc"})
 
     def test_config_loader_reads_json_and_env_file(self) -> None:
-        with tempfile.TemporaryDirectory() as temp:
-            root = Path(temp)
-            (root / "configs").mkdir()
-            (root / "configs" / "settings.json").write_text(
-                '{"spreadsheet_id": "old", "process_queue_only": false}',
-                encoding="utf-8",
-            )
-            (root / ".env").write_text("APP_SPREADSHEET_ID=new\nAPP_PROCESS_QUEUE_ONLY=true\n", encoding="utf-8")
+        root = self._temp_root()
+        (root / "configs").mkdir()
+        (root / "configs" / "settings.json").write_text(
+            '{"spreadsheet_id": "old", "process_queue_only": false}',
+            encoding="utf-8",
+        )
+        (root / ".env").write_text("APP_SPREADSHEET_ID=new\nAPP_PROCESS_QUEUE_ONLY=true\n", encoding="utf-8")
 
-            settings = ConfigLoader(root, env_prefix="APP_").load_settings()
+        settings = ConfigLoader(root, env_prefix="APP_").load_settings()
 
         self.assertEqual(settings["spreadsheet_id"], "new")
         self.assertTrue(settings["process_queue_only"])
@@ -84,6 +97,24 @@ class ConfigLoaderTests(unittest.TestCase):
         merged = apply_env_overrides(settings, env)
 
         self.assertEqual(merged["youtube_oauth_token_json"], "./secrets/token.json")
+
+    def test_subtitle_translation_api_env_aliases_are_supported(self) -> None:
+        settings = {
+            "subtitle_translation_api_key": "",
+            "subtitle_translation_base_url": "old",
+            "subtitle_translation_model": "old-model",
+        }
+        env = {
+            "DASHSCOPE_API_KEY": "dashscope-key",
+            "SUBTITLE_TRANSLATION_BASE_URL": "https://example.test/v1",
+            "SUBTITLE_TRANSLATION_MODEL": "qwen-plus",
+        }
+
+        merged = apply_env_overrides(settings, env)
+
+        self.assertEqual(merged["subtitle_translation_api_key"], "dashscope-key")
+        self.assertEqual(merged["subtitle_translation_base_url"], "https://example.test/v1")
+        self.assertEqual(merged["subtitle_translation_model"], "qwen-plus")
 
 
 if __name__ == "__main__":

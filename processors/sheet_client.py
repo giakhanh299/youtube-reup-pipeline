@@ -220,6 +220,26 @@ class SheetConfig:
         if updates:
             ws.batch_update(updates)
 
+    def update_channel_fields_by_channel_id(self, channel_id: str, fields: dict[str, Any], worksheet_name: str = "CHANNEL_CONFIG") -> None:
+        if self._sh is None:
+            self.connect()
+        import gspread
+        ws = self._sh.worksheet(worksheet_name)
+        headers = ws.row_values(1)
+        if "channel_id" not in headers:
+            raise ValueError(f"channel_id column not found in {worksheet_name}")
+        id_col = headers.index("channel_id") + 1
+        cell = ws.find(channel_id, in_column=id_col)
+        if not cell:
+            return
+        updates = []
+        for header, value in fields.items():
+            if header in headers:
+                col = headers.index(header) + 1
+                updates.append({"range": gspread.utils.rowcol_to_a1(cell.row, col), "values": [[value]]})
+        if updates:
+            ws.batch_update(updates)
+
     def upsert_uploaded_video(self, ledger_row: dict[str, Any]) -> str:
         if self._sh is None:
             self.connect()

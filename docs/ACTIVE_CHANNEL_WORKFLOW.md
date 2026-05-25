@@ -15,6 +15,12 @@ long_tieng_final.py
 These files are not integrated, rewritten, or forced into the new workflow.
 They remain examples of the old subtitle, translation, and local dubbing logic.
 
+The new clean orchestrator is:
+
+```text
+scripts/run_processing_workflow.py
+```
+
 ## What Active Channel Does
 
 Active channel selection controls:
@@ -39,6 +45,8 @@ The active-channel layer does not:
 - run or rewrite `dich_gemini.py`
 - run or rewrite `long_tieng_final.py`
 - replace the existing processing pipeline
+- download Google Drive videos in Python
+- upload YouTube videos
 
 The current working folder behavior stays the source of truth for processing.
 
@@ -91,19 +99,55 @@ This only:
 
 It does not run video processing and does not change existing folder paths.
 
-### Step 2: Run Current Workflow
+### Step 2: Run Processing Workflow
 
-Run the current working process normally. GAS still handles video
-fetching/downloading and preparation. Existing Python scripts or other tools
-continue using their current folders.
-
-Examples:
+Run the new orchestrator:
 
 ```powershell
-python RUN.py
+python scripts\run_processing_workflow.py
 ```
 
-or:
+This script:
+
+- reads `runtime/state/active_channel.json`
+- uses the existing configured folder paths
+- generates `.srt` subtitles using logic based on `lay_sub.py`
+- translates `.srt` files to `_vi.srt` using logic based on `dich_gemini.py`
+- creates cloned voice audio with the existing `TTSService` / OmniVoice local setup
+- renders per-channel output video with the existing `RenderService`
+- logs each step
+- does not download from Google Drive
+- does not upload to YouTube
+
+Default folders match the current workflow:
+
+```text
+processing_source_dir = G:/My Drive/Video Doujin/VIDEO IN PUT GIAKHANH CHANEL
+processing_work_dir   = G:/My Drive/Video Doujin/VIDEO IN PUT GIAKHANH CHANEL/DA_XU_LY
+```
+
+Voice cloning still comes from Google Sheet config:
+
+- `CHANNEL_CONFIG.voice_id` selects the voice.
+- `VOICE_CONFIG.ref_audio_path` and `VOICE_CONFIG.ref_text` are used by OmniVoice.
+- `CHANNEL_CONFIG.output_folder` receives the rendered video.
+- `processing_keep_voice_audio=false` deletes temporary cloned audio after render.
+
+The translation API key is read from `.env` or the environment. Supported names:
+
+```powershell
+SUBTITLE_TRANSLATION_API_KEY=...
+DASHSCOPE_API_KEY=...
+OPENAI_API_KEY=...
+```
+
+For a one-off test without editing config:
+
+```powershell
+python scripts\run_processing_workflow.py --source-dir "G:\My Drive\Video Doujin\VIDEO IN PUT GIAKHANH CHANEL" --processing-dir "G:\My Drive\Video Doujin\VIDEO IN PUT GIAKHANH CHANEL\DA_XU_LY"
+```
+
+The old scripts remain available as references/manual fallback only:
 
 ```powershell
 python lay_sub.py
@@ -146,7 +190,7 @@ Python writes active channel state and lock
 GAS prepares videos using existing workflow
           |
           v
-Current processing workflow runs with current folder paths
+New Python processing orchestrator uses current folder paths
           |
           v
 Uploader reads active channel token when no job token is set
