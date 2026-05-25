@@ -76,12 +76,20 @@ class ActiveChannelStateStore:
             selected_at=str(data.get("selected_at", "")).strip(),
         )
 
-    def finish(self, clean_after_finish: bool = False) -> None:
-        if clean_after_finish:
-            self.workspace.clean(label="post_finish")
+    def finish(self, force_clean: bool = False, clean_after_finish: bool | None = None) -> None:
+        if clean_after_finish is not None:
+            force_clean = clean_after_finish
+        if force_clean:
+            self.log(
+                "active_channel_force_cleanup_started",
+                state_path=str(self.state_path),
+                lock_path=str(self.workspace.workspace.lock_path),
+            )
+            self.workspace.clean(label="force_cleanup")
         try:
+            self.log("active_channel_state_delete_started", state_path=str(self.state_path), force_clean=force_clean)
             self.state_path.unlink()
         except FileNotFoundError:
             pass
         self.workspace.release()
-        self.log("active_channel_finished", state_path=str(self.state_path))
+        self.log("active_channel_finished", state_path=str(self.state_path), force_clean=force_clean)

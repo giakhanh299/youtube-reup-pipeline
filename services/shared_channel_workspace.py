@@ -85,6 +85,7 @@ class SharedChannelWorkspaceManager:
 
     def release(self) -> None:
         try:
+            self.log("shared_channel_lock_release_started", lock_path=str(self.workspace.lock_path))
             self.workspace.lock_path.unlink()
             self.log("shared_channel_lock_released", lock_path=str(self.workspace.lock_path))
         except FileNotFoundError:
@@ -92,11 +93,13 @@ class SharedChannelWorkspaceManager:
 
     def clean(self, label: str = "cleanup") -> None:
         self.ensure_dirs()
+        self.log("shared_channel_workspace_cleaning_started", label=label, folders=[str(folder) for folder in self.work_folders()])
         for folder in self.work_folders():
             self.clean_folder(folder, label=label)
 
     def clean_folder(self, folder: Path, label: str = "cleanup") -> None:
         folder.mkdir(parents=True, exist_ok=True)
+        self.log("shared_channel_workspace_clean_folder_started", folder=str(folder), label=label)
         removed = 0
         for child in folder.iterdir():
             self._remove_path(child)
@@ -105,6 +108,7 @@ class SharedChannelWorkspaceManager:
 
     def clean_processing_and_output(self, label: str = "cleanup") -> None:
         self.ensure_dirs()
+        self.log("shared_channel_workspace_cleaning_started", label=label, folders=[str(folder) for folder in (self.workspace.processing_dir, self.workspace.output_dir) if folder is not None])
         for folder in (self.workspace.processing_dir, self.workspace.output_dir):
             if folder is not None:
                 self.clean_folder(folder, label=label)

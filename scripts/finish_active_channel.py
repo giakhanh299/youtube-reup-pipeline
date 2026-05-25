@@ -15,12 +15,12 @@ from services.active_channel_state import ActiveChannelStateStore
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Finish the selected channel session and release the active-channel lock.")
-    parser.add_argument("--clean-runtime", action="store_true", help="Also clean configured runtime work folders.")
+    parser.add_argument("--force-clean", action="store_true", help="Clean configured runtime work folders before releasing the lock.")
     args = parser.parse_args()
 
     settings = ConfigLoader(ROOT).load_settings()
     logger = StructuredLogger(ROOT / settings.get("log_dir", "runtime/logs"))
-    ActiveChannelStateStore(ROOT, settings, logger=logger).finish(clean_after_finish=args.clean_runtime)
+    ActiveChannelStateStore(ROOT, settings, logger=logger).finish(force_clean=args.force_clean)
     print("active channel finished")
     return 0
 
