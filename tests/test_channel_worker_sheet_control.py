@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from pathlib import Path
 import shutil
 import unittest
 import uuid
+from pathlib import Path
 
 from services.channel_sheet_registry import ChannelSheetConfig
 from workers.channel_worker import ChannelWorker
@@ -15,6 +15,12 @@ class FakeRegistry:
 
     def enabled_channels(self, max_channels=None):
         return self.channels[:max_channels]
+
+    def selected_channel(self, channel_id):
+        for channel in self.channels:
+            if channel.channel_id == channel_id:
+                return channel
+        raise KeyError(channel_id)
 
 
 class FakeJobProcessor:

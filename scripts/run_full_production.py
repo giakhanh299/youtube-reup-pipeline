@@ -12,6 +12,7 @@ from configs.config_loader import ConfigLoader
 from logs.structured_logger import StructuredLogger
 from processors.job_processor import VideoJobProcessor
 from repositories.sheet_repository import SheetRepository
+from services.active_channel_state import ActiveChannelStateStore
 from services.channel_sheet_registry import ChannelSheetRegistry
 from services.render_service import RenderService
 from services.tts_service import TTSService
@@ -24,6 +25,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Run sheet-controlled production processing for many channels.")
     parser.add_argument("--source", choices=["google_sheet"], default="google_sheet")
     parser.add_argument("--max-channels", type=int, default=100)
+    parser.add_argument("--channel-id", default="", help="Select one active CHANNEL_CONFIG channel for the existing workflow.")
+    parser.add_argument("--resume", action="store_true", help="Do not pre-clean shared runtime folders when selecting a channel.")
     parser.add_argument("--dry-run", action="store_true", help="Render only; do not upload.")
     args = parser.parse_args()
 
@@ -39,6 +42,12 @@ def main() -> int:
     repository = SheetRepository.from_settings(settings, ROOT, retry_strategy=retry_strategy, logger=logger)
     _sheet, _channels, voices, music_packs, overlay_packs, render_presets, _queue = repository.load_all()
     registry = ChannelSheetRegistry(repository, settings, ROOT)
+    if args.channel_id:
+        channel = registry.selected_channel(args.channel_id)
+        state = ActiveChannelStateStore(ROOT, settings, logger=logger).select(channel, resume=args.resume)
+        print(f"selected {state.channel_id} {state.channel_name} {state.youtube_token_path}")
+        return 0
+
     job_processor = VideoJobProcessor(
         ROOT,
         tts_service=TTSService(retry_strategy=retry_strategy, logger=logger, settings=settings),

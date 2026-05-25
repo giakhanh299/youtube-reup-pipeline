@@ -19,6 +19,16 @@
 
   "temp_dir": "runtime/temp",
 
+  "shared_input_dir": "runtime/input",
+
+  "shared_processing_dir": "runtime/processing",
+
+  "shared_output_dir": "runtime/output",
+
+  "active_channel_lock_path": "runtime/state/active_channel.lock",
+
+  "active_channel_state_path": "runtime/state/active_channel.json",
+
   "process_queue_only": true,
 
   "queue_status_new": "NEW",

@@ -77,7 +77,7 @@ Supported Telegram commands:
 ```text
 /help
 /status
-/run
+/run <channel_id>
 /pause
 /resume
 /retry <job_id>
@@ -93,6 +93,53 @@ Pause/resume and command intents are written locally under:
 runtime/state/control_state.json
 runtime/state/control_events.jsonl
 ```
+
+## Active Channel Workflow
+
+The active-channel workflow keeps the existing GAS and legacy processing scripts
+unchanged while adding one-channel-at-a-time token selection and lock
+protection.
+
+Detailed documentation:
+
+```text
+docs/ACTIVE_CHANNEL_WORKFLOW.md
+```
+
+Production outline:
+
+```powershell
+python scripts\run_full_production.py --channel-id channel_001
+python RUN.py
+python scripts\finish_active_channel.py
+```
+
+Or run the old scripts manually between select and finish:
+
+```powershell
+python lay_sub.py
+python dich_gemini.py
+python long_tieng_final.py
+```
+
+State files:
+
+```text
+runtime/state/active_channel.json
+runtime/state/active_channel.lock
+```
+
+Only one channel may run at a time because shared runtime folders are used:
+
+```text
+runtime/input
+runtime/processing
+runtime/output
+```
+
+GAS still handles video fetching/downloading. Python only stores the selected
+channel, protects the shared folders with a lock, routes upload token selection,
+and cleans shared runtime folders when the channel session is finished.
 
 Cloudflare Tunnel can expose the local API for Telegram webhook testing:
 

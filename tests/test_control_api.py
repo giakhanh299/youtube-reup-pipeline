@@ -101,6 +101,31 @@ class ControlApiTests(unittest.TestCase):
         self.assertEqual(calls, [("retry", "job_1")])
         self.assertEqual(store.events[-1], ("retry", "job_1"))
 
+    def test_run_requires_selected_channel_and_passes_channel_id_to_runner(self) -> None:
+        calls = []
+
+        def runner(action: str, job_id: str) -> str:
+            calls.append((action, job_id))
+            return f"ran {action} {job_id}"
+
+        store = FakeStateStore()
+        settings = {"TELEGRAM_ALLOWED_CHAT_IDS": "123"}
+        handler = TelegramControlHandler(
+            ".",
+            settings,
+            state_store=store,
+            state_builder=FakeStateBuilder(),
+            action_runner=runner,
+        )
+        client = build_client(settings, handler)
+
+        missing = client.post("/telegram/webhook", json={"message": {"chat": {"id": 123}, "text": "/run"}})
+        selected = client.post("/telegram/webhook", json={"message": {"chat": {"id": 123}, "text": "/run channel_001"}})
+
+        self.assertIn("Usage: /run <channel_id>", missing.json()["text"])
+        self.assertIn("ran run channel_001", selected.json()["text"])
+        self.assertEqual(calls, [("run", "channel_001")])
+
     def test_unknown_command_returns_help_hint(self) -> None:
         handler = TelegramControlHandler(
             ".",

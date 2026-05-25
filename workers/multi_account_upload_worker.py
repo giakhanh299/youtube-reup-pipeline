@@ -7,6 +7,7 @@ from typing import Any, Callable
 from integrations.youtube.youtube_api_uploader import YouTubeApiUploader
 from logs.structured_logger import NullLogger
 from repositories.queue_persistence import QueueJobState
+from services.active_channel_state import ActiveChannelStateStore
 
 
 @dataclass(frozen=True)
@@ -34,6 +35,7 @@ class MultiAccountUploader:
         self._uploaders: dict[str, Any] = {}
         self._tokens_by_account: dict[str, str] = {}
         self._locks: dict[str, Lock] = {}
+        self.active_state_store = ActiveChannelStateStore(".", self.settings, logger=self.logger)
 
     def _account_name_for(self, job: QueueJobState) -> str:
         return job.account_name or job.channel_key or "default"
@@ -41,10 +43,12 @@ class MultiAccountUploader:
     def _assignment_for(self, job: QueueJobState) -> AccountWorkerAssignment:
         account_name = self._account_name_for(job)
         worker_index = abs(hash(account_name)) % max(self.worker_count, 1)
+        active_state = self.active_state_store.load()
+        active_token = active_state.youtube_token_path if active_state else ""
         return AccountWorkerAssignment(
             account_name=account_name,
             channel_key=job.channel_key,
-            youtube_token_path=job.youtube_token_path,
+            youtube_token_path=job.youtube_token_path or active_token,
             worker_index=worker_index,
         )
 

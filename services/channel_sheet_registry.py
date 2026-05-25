@@ -27,6 +27,7 @@ class ChannelSheetConfig:
     worker_id: str = ""
     last_error: str = ""
     ref_text: str = ""
+    source_folder_id: str = ""
     raw: dict | None = None
 
 
@@ -111,6 +112,7 @@ class ChannelSheetRegistry:
             worker_id=str(row.get("worker_id", "")).strip(),
             last_error=str(row.get("last_error", "")).strip(),
             ref_text=str(row.get("ref_text", "")).strip(),
+            source_folder_id=str(row.get("source_folder_id", "")).strip(),
             raw=row,
         )
 
@@ -124,3 +126,16 @@ class ChannelSheetRegistry:
             if max_channels is not None and len(channels) >= max_channels:
                 break
         return channels
+
+    def selected_channel(self, channel_id: str) -> ChannelSheetConfig:
+        requested = str(channel_id or "").strip()
+        if not requested:
+            raise ValueError("channel_id is required")
+        for row in self._load_rows():
+            if str(row.get("channel_id", "")).strip() != requested:
+                continue
+            channel = self.normalize_row(row)
+            if not channel.enabled:
+                raise ValueError(f"channel is disabled: {requested}")
+            return channel
+        raise KeyError(f"channel_id not found: {requested}")

@@ -139,7 +139,9 @@ class TelegramControlHandler:
                 return "Usage: /retry <job_id>"
             return self._run_action("retry", argument)
         if command in {"/run", "/render", "/upload"}:
-            return self._run_action(command.lstrip("/"))
+            if command == "/run" and not argument:
+                return "Usage: /run <channel_id>. Select exactly one CHANNEL_CONFIG channel before running."
+            return self._run_action(command.lstrip("/"), argument)
         return "Unknown command. Send /help for available commands."
 
     def _parse_command(self, text: str) -> tuple[str, str]:
@@ -160,7 +162,7 @@ class TelegramControlHandler:
     def help_text(self) -> str:
         return (
             "Commands:\n"
-            "/help\n/status\n/run\n/pause\n/resume\n/retry <job_id>\n"
+            "/help\n/status\n/run <channel_id>\n/pause\n/resume\n/retry <job_id>\n"
             "/render\n/upload\n/sheet\n/logs"
         )
 

@@ -58,6 +58,7 @@ class ChannelSheetRegistryTests(unittest.TestCase):
                 "daily_limit": "2",
                 "worker_id": "w1",
                 "last_error": "",
+                "source_folder_id": "drive_folder_1",
             },
             {"channel_id": "ch2", "input_folder": "input/ch2", "enabled": "FALSE"},
         ]
@@ -77,6 +78,7 @@ class ChannelSheetRegistryTests(unittest.TestCase):
         self.assertEqual(channels[0].music_pack_id, "music_1")
         self.assertEqual(channels[0].overlay_pack_id, "overlay_1")
         self.assertEqual(channels[0].render_preset_id, "preset_1")
+        self.assertEqual(channels[0].source_folder_id, "drive_folder_1")
         self.assertEqual(channels[0].voice_path, str((self.voices_dir / "cute.wav").resolve()))
         self.assertTrue(
             channels[0].youtube_oauth_token_json.endswith("tokens\\channel_001.pickle")
@@ -88,6 +90,25 @@ class ChannelSheetRegistryTests(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "input_folder is required"):
             registry.enabled_channels()
+
+    def test_selected_channel_requires_exact_enabled_channel(self) -> None:
+        registry = ChannelSheetRegistry(
+            FakeRepository(
+                [
+                    {"channel_id": "ch1", "input_folder": "input/ch1", "enabled": "TRUE"},
+                    {"channel_id": "ch2", "input_folder": "input/ch2", "enabled": "FALSE"},
+                ],
+                self.root,
+            ),
+            {},
+            self.root,
+        )
+
+        self.assertEqual(registry.selected_channel("ch1").channel_id, "ch1")
+        with self.assertRaisesRegex(ValueError, "channel is disabled"):
+            registry.selected_channel("ch2")
+        with self.assertRaisesRegex(KeyError, "channel_id not found"):
+            registry.selected_channel("missing")
 
 
 if __name__ == "__main__":
