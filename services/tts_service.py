@@ -21,6 +21,19 @@ class TTSService:
         self.logger = logger
         self.settings = settings or {}
 
+    def _omnivoice_model_ref(self, voice_cfg: dict) -> str:
+        model_path = str(
+            voice_cfg.get("omnivoice_model_path")
+            or self.settings.get("omnivoice_model_path")
+            or ""
+        ).strip()
+        if model_path:
+            return model_path
+        return str(
+            voice_cfg.get("omnivoice_model_name")
+            or self.settings.get("omnivoice_model_name", "k2-fsa/OmniVoice")
+        ).strip()
+
     def create_voice(self, text: str, output_file: Path, voice_cfg: dict, google_key_dir: str = "") -> None:
         engine = str(
             voice_cfg.get("tts_engine")
@@ -30,7 +43,7 @@ class TTSService:
         ).strip().lower()
         if engine in {"omnivoice", "omnivoice_local", "local_omnivoice"}:
             operation = lambda: OmniVoiceLocalService(
-                model_name=voice_cfg.get("omnivoice_model_name") or self.settings.get("omnivoice_model_name", "k2-fsa/OmniVoice"),
+                model_name=self._omnivoice_model_ref(voice_cfg),
                 local_files_only=to_bool(
                     voice_cfg.get("omnivoice_local_files_only", self.settings.get("omnivoice_local_files_only")),
                     True,

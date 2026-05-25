@@ -40,6 +40,10 @@ class OmniVoiceService:
         self.verbose = verbose
         self._model: Any = None
 
+    def _resolve_model_ref(self) -> str:
+        model_path = str(self.model_name or "").strip()
+        return model_path or "k2-fsa/OmniVoice"
+
     def _log(self, message: str) -> None:
         if self.verbose:
             print(f"[OmniVoice] {message}", flush=True)
@@ -80,15 +84,16 @@ class OmniVoiceService:
 
         try:
             if self.model_loader:
-                model = self.model_loader(self.model_name)
+                model = self.model_loader(self._resolve_model_ref())
             else:
                 try:
                     from omnivoice import OmniVoice
                 except Exception:
                     from OmniVoice import OmniVoice
 
-                self._log(f"Loading model: {self.model_name}")
-                model = OmniVoice.from_pretrained(self.model_name, local_files_only=self.local_files_only)
+                model_ref = self._resolve_model_ref()
+                self._log(f"Loading model: {model_ref}")
+                model = OmniVoice.from_pretrained(model_ref, local_files_only=self.local_files_only)
         except Exception as exc:
             raise OmniVoiceServiceError(
                 "OmniVoice package/model is not available. "

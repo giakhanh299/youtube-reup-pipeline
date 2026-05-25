@@ -64,6 +64,7 @@ def apply_env_overrides(settings: dict, env: dict[str, str] | None = None, prefi
         "OPENAI_API_KEY": ("subtitle_translation_api_key", "SUBTITLE_TRANSLATION_API_KEY"),
         "SUBTITLE_TRANSLATION_BASE_URL": ("subtitle_translation_base_url", "SUBTITLE_TRANSLATION_BASE_URL"),
         "SUBTITLE_TRANSLATION_MODEL": ("subtitle_translation_model", "SUBTITLE_TRANSLATION_MODEL"),
+        "OMNIVOICE_MODEL_PATH": ("omnivoice_model_path", "OMNIVOICE_MODEL_PATH"),
     }
     for env_key, (setting_key, canonical_env_name) in legacy_aliases.items():
         prefixed_key = f"{prefix}{env_key}"

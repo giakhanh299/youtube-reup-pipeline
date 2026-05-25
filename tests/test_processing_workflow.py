@@ -225,10 +225,53 @@ class ProcessingWorkflowTests(unittest.TestCase):
         self.assertEqual(result.videos_rendered, 1)
         self.assertTrue(output_dir.is_dir())
         self.assertEqual(tts_service.calls[0]["voice_cfg"]["tts_engine"], "omnivoice_local")
+        self.assertEqual(tts_service.calls[0]["voice_cfg"]["omnivoice_model_path"], "")
         self.assertIn("vi hello", tts_service.calls[0]["text"])
         self.assertEqual(render_service.calls[0]["input_video"], processing_dir / "clip.mp4")
         self.assertEqual(render_service.calls[0]["channel_cfg"]["subtitle_path"], str(processing_dir / "clip_vi.srt"))
         self.assertTrue((output_dir / "channel_002_clip.mp4").exists())
+
+    def test_workflow_passes_configured_omnivoice_model_path_to_tts(self) -> None:
+        source_dir = self.root / "legacy_input"
+        processing_dir = self.root / "legacy_input" / "DA_XU_LY"
+        source_dir.mkdir(parents=True)
+        (source_dir / "clip.mp4").write_bytes(b"video")
+        active = ActiveChannelState(
+            channel_id="channel_002",
+            channel_name="Gia Khanh Chanel",
+            youtube_token_path="tokens/ch2.pickle",
+            source_folder_id="drive_folder_2",
+        )
+        tts_service = FakeTTSService()
+        workflow = ProcessingWorkflow(
+            self.root,
+            {
+                "processing_source_dir": str(source_dir),
+                "processing_work_dir": str(processing_dir),
+                "subtitle_translation_batch_size": 10,
+                "subtitle_translation_batch_delay_seconds": 0,
+                "temp_dir": "runtime/temp",
+                "omnivoice_model_path": r"D:\models\OmniVoice",
+            },
+            active,
+            transcriber=FakeTranscriber(),
+            translator=FakeTranslator(),
+            tts_service=tts_service,
+            render_service=FakeRenderService(),
+            channel_cfg={"voice_id": "voice_omnivoice_1", "output_folder": str(self.root / "runtime" / "output" / "existing_channel")},
+            voices={
+                "voice_omnivoice_1": {
+                    "active": True,
+                    "tts_engine": "omnivoice_local",
+                    "ref_audio_path": str(self.root / "voices" / "ref.wav"),
+                    "ref_text": "reference voice",
+                }
+            },
+        )
+
+        workflow.run()
+
+        self.assertEqual(tts_service.calls[0]["voice_cfg"]["omnivoice_model_path"], r"D:\models\OmniVoice")
 
     def test_empty_output_folder_generates_local_folder_and_updates_sheet(self) -> None:
         source_dir = self.root / "legacy_input"

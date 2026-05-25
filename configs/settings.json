@@ -117,6 +117,7 @@
   "voice_engine": "omnivoice_local",
   "voices_dir": "runtime/voices",
   "default_voice_name": "",
+  "omnivoice_model_path": "",
   "omnivoice_model_name": "k2-fsa/OmniVoice",
   "omnivoice_local_files_only": true,
   "omnivoice_default_language": "vi",

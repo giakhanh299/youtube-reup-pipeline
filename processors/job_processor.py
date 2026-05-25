@@ -121,6 +121,7 @@ class VideoJobProcessor:
             ).strip().lower()
             voice_cfg.setdefault("engine", engine)
             voice_cfg.setdefault("tts_engine", engine)
+            voice_cfg.setdefault("omnivoice_model_path", settings.get("omnivoice_model_path", ""))
             voice_cfg.setdefault("omnivoice_model_name", settings.get("omnivoice_model_name", "k2-fsa/OmniVoice"))
             voice_cfg.setdefault("omnivoice_device", settings.get("omnivoice_device", "auto"))
             voice_cfg.setdefault("omnivoice_local_files_only", settings.get("omnivoice_local_files_only", True))

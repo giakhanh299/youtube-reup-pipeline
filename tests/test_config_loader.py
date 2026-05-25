@@ -116,6 +116,14 @@ class ConfigLoaderTests(unittest.TestCase):
         self.assertEqual(merged["subtitle_translation_base_url"], "https://example.test/v1")
         self.assertEqual(merged["subtitle_translation_model"], "qwen-plus")
 
+    def test_omnivoice_model_path_env_alias_is_supported(self) -> None:
+        settings = {"omnivoice_model_path": "", "omnivoice_model_name": "k2-fsa/OmniVoice"}
+        env = {"OMNIVOICE_MODEL_PATH": r"D:\models\OmniVoice"}
+
+        merged = apply_env_overrides(settings, env)
+
+        self.assertEqual(merged["omnivoice_model_path"], r"D:\models\OmniVoice")
+
 
 if __name__ == "__main__":
     unittest.main()

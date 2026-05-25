@@ -384,6 +384,7 @@ class ProcessingWorkflow:
         ).strip().lower()
         voice_cfg.setdefault("engine", engine)
         voice_cfg.setdefault("tts_engine", engine)
+        voice_cfg.setdefault("omnivoice_model_path", self.settings.get("omnivoice_model_path", ""))
         voice_cfg.setdefault("omnivoice_model_name", self.settings.get("omnivoice_model_name", "k2-fsa/OmniVoice"))
         voice_cfg.setdefault("omnivoice_device", self.settings.get("omnivoice_device", "auto"))
         voice_cfg.setdefault("omnivoice_local_files_only", self.settings.get("omnivoice_local_files_only", True))
@@ -456,6 +457,13 @@ class ProcessingWorkflow:
         temp_dir = self.root / self.settings.get("temp_dir", "runtime/temp") / self.active_channel.channel_id
         temp_dir.mkdir(parents=True, exist_ok=True)
         voice_id, voice_cfg = self._voice_cfg()
+        omnivoice_model_ref = str(voice_cfg.get("omnivoice_model_path") or voice_cfg.get("omnivoice_model_name") or "").strip()
+        if omnivoice_model_ref:
+            self.log(
+                "processing_omnivoice_model_selected",
+                voice_id=voice_id,
+                omnivoice_model_ref=omnivoice_model_ref,
+            )
         subtitles = sorted(path for path in self.processing_dir.iterdir() if path.is_file() and path.name.endswith("_vi.srt"))
         self.log("processing_voice_clone_scan", processing_dir=str(self.processing_dir), subtitles=len(subtitles), voice_id=voice_id)
         voice_tracks = 0
