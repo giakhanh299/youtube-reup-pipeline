@@ -130,6 +130,48 @@ class ProcessingWorkflowTests(unittest.TestCase):
         self.assertEqual(transcriber.videos, [source_dir / "clip.mp4"])
         self.assertEqual(len(translator.batches), 1)
 
+    def test_missing_source_folder_is_created_and_does_not_fail(self) -> None:
+        source_dir = self.root / "runtime" / "input"
+        processing_dir = self.root / "runtime" / "processing"
+        active = ActiveChannelState(
+            channel_id="channel_002",
+            channel_name="Gia Khanh Chanel",
+            youtube_token_path="tokens/ch2.pickle",
+            source_folder_id="drive_folder_2",
+        )
+        workflow = ProcessingWorkflow(
+            self.root,
+            {
+                "processing_source_dir": str(source_dir),
+                "processing_work_dir": str(processing_dir),
+                "subtitle_translation_batch_size": 10,
+                "subtitle_translation_batch_delay_seconds": 0,
+                "temp_dir": "runtime/temp",
+            },
+            active,
+            transcriber=FakeTranscriber(),
+            translator=FakeTranslator(),
+            tts_service=FakeTTSService(),
+            render_service=FakeRenderService(),
+            channel_cfg={"voice_id": "voice_omnivoice_1", "output_folder": str(self.root / "runtime" / "output" / "existing_channel")},
+            voices={
+                "voice_omnivoice_1": {
+                    "active": True,
+                    "tts_engine": "omnivoice_local",
+                    "ref_audio_path": str(self.root / "voices" / "ref.wav"),
+                    "ref_text": "reference voice",
+                }
+            },
+        )
+
+        result = workflow.run()
+
+        self.assertTrue(source_dir.is_dir())
+        self.assertTrue(processing_dir.is_dir())
+        self.assertEqual(result.subtitles_created, 0)
+        self.assertEqual(result.subtitles_translated, 0)
+        self.assertEqual(result.videos_rendered, 0)
+
     def test_voice_clone_and_render_use_channel_voice_config(self) -> None:
         source_dir = self.root / "legacy_input"
         processing_dir = self.root / "legacy_input" / "DA_XU_LY"

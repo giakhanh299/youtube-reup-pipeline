@@ -289,11 +289,19 @@ class ProcessingWorkflow:
         return self.translator
 
     def generate_subtitles(self) -> int:
-        if not self.source_dir.exists():
-            raise ProcessingWorkflowError(f"processing source folder not found: {self.source_dir}")
+        if self.source_dir.exists():
+            if not self.source_dir.is_dir():
+                raise ProcessingWorkflowError(f"processing source folder is not a directory: {self.source_dir}")
+            self.log("processing_source_folder_exists", source_dir=str(self.source_dir))
+        else:
+            self.source_dir.mkdir(parents=True, exist_ok=True)
+            self.log("processing_source_folder_created", source_dir=str(self.source_dir))
         self.processing_dir.mkdir(parents=True, exist_ok=True)
         videos = sorted(path for path in self.source_dir.iterdir() if path.is_file() and path.suffix.lower() == ".mp4")
         self.log("processing_subtitle_scan", source_dir=str(self.source_dir), videos=len(videos))
+        if not videos:
+            self.log("processing_subtitle_no_videos", source_dir=str(self.source_dir))
+            return 0
         created = 0
         for video_path in videos:
             srt_path = self.source_dir / f"{video_path.stem}.srt"

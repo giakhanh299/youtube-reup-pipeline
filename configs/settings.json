@@ -23,9 +23,9 @@
 
   "active_channel_state_path": "runtime/state/active_channel.json",
 
-  "processing_source_dir": "G:/My Drive/Video Doujin/VIDEO IN PUT GIAKHANH CHANEL",
+  "processing_source_dir": "runtime/input",
 
-  "processing_work_dir": "G:/My Drive/Video Doujin/VIDEO IN PUT GIAKHANH CHANEL/DA_XU_LY",
+  "processing_work_dir": "runtime/processing",
 
   "subtitle_whisper_model_size": "medium",
 
